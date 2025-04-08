@@ -4,7 +4,7 @@
 #include <rclcpp/rclcpp.hpp>
 
 namespace Ui {
-class MyWidgetUI;
+class simWidgetUi;
 }
 
 class MyWidget : public QWidget
@@ -23,8 +23,11 @@ private:
   void GetEntityState();
   void SetEntityState();
   void DespawnButton();
+  void DespawnnAll();
+  void GetSimFeatures();
+  void ResetSimulation();
 
-  Ui::MyWidgetUI *ui_;
+  Ui::simWidgetUi *ui_;
   rclcpp::Node::SharedPtr node_;
 };
 

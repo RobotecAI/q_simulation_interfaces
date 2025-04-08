@@ -11,6 +11,7 @@
 -- Using RMW implementation 'rmw_fastrtps_cpp' as default
 -- Found simulation_interfaces: 1.0.0 (/home/michalpelka/github_develop/ros2_ws/install/simulation_interfaces/share/simulation_interfaces/cmake)
 -- Found rclcpp_action: 16.0.11 (/opt/ros/humble/share/rclcpp_action/cmake)
--- Configuring done (0.3s)
+-- Found tf2: 0.25.12 (/opt/ros/humble/share/tf2/cmake)
+-- Configuring done (0.5s)
 -- Generating done (0.0s)
 -- Build files have been written to: /home/michalpelka/github_develop/ros2_ws/src/q_simulation_interfaces/cmake-build-debug

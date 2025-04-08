@@ -7,6 +7,7 @@ find_package(rclcpp REQUIRED)
 find_package(Qt5 REQUIRED COMPONENTS Widgets)
 find_package(simulation_interfaces REQUIRED)
 find_package(rclcpp_action REQUIRED)
+find_package(tf2 REQUIRED)
 
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 set(CMAKE_CXX_STANDARD 17)
@@ -15,17 +16,18 @@ set(CMAKE_CXX_STANDARD 17)
 
 set(SOURCES src/main.cpp
             src/my_widget.cpp)
-qt5_wrap_ui(SOURCES resource/my_widget.ui)
+qt5_wrap_ui(SOURCES resource/sim_widget.ui)
 add_executable(${PROJECT_NAME} ${SOURCES}
 )
 
 ament_target_dependencies(${PROJECT_NAME}
-  rclcpp rclcpp_action simulation_interfaces
+  rclcpp rclcpp_action simulation_interfaces tf2
 )
 
 target_link_libraries(${PROJECT_NAME}
   Qt5::Widgets
 )
+
 
 install(TARGETS ${PROJECT_NAME}
   DESTINATION lib/${PROJECT_NAME}
