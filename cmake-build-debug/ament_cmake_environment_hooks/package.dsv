@@ -1,4 +1,0 @@
-source;share/q_simulation_interfaces/local_setup.bash
-source;share/q_simulation_interfaces/local_setup.dsv
-source;share/q_simulation_interfaces/local_setup.sh
-source;share/q_simulation_interfaces/local_setup.zsh
