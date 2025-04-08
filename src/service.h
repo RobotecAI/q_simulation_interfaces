@@ -11,6 +11,7 @@
 #include <rclcpp/rclcpp.hpp>
 #include <rclcpp_action/rclcpp_action.hpp>
 #include <type_traits>
+#include "stringToKeys.h"
 
 template<typename T>
 class Service {
@@ -51,7 +52,16 @@ private:
         auto response = future.get();
         if (response->result.result != simulation_interfaces::msg::Result::RESULT_OK) {
             RCLCPP_ERROR(node_->get_logger(), "Service call failed: %s", response->result.error_message.c_str());
-            QMessageBox::warning(nullptr, "Error", QString::fromStdString(response->result.error_message));
+
+            const auto error_code = static_cast<int>(response->result.result);
+            QString errorType;
+            if (auto it = ErrorIdToName.find(error_code); it != ErrorIdToName.end()) {
+                errorType = QString::fromStdString(it->second);
+            } else {
+                errorType = "Error : " + QString::number(error_code) ;
+            }
+
+            QMessageBox::warning(nullptr, errorType, QString::fromStdString(response->result.error_message));
             return *response;
         }
         return *response;

@@ -39,3 +39,11 @@ const std::map<std::string, int> ScopeNameToId
         {"SCOPE_SPAWNED", 4},
         {"SCOPE_ALL", 255},
 };
+
+const std::map<int, std::string > ErrorIdToName
+    {
+            {0, "RESULT_FEATURE_UNSUPPORTED"},
+            {2, "RESULT_NOT_FOUND"},
+            {3, "RESULT_INCORRECT_STATE"},
+            {4, "RESULT_OPERATION_FAILED"},
+    };

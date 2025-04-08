@@ -266,14 +266,21 @@
      <item>
       <layout class="QHBoxLayout" name="horizontalLayout_2">
        <item>
-        <widget class="QPushButton" name="PushButtonRefresh">
+        <widget class="QLabel" name="label_18">
          <property name="text">
-          <string>Refresh</string>
+          <string>URI:</string>
          </property>
         </widget>
        </item>
        <item>
         <widget class="QComboBox" name="ComboSpawables"/>
+       </item>
+       <item>
+        <widget class="QPushButton" name="PushButtonRefresh">
+         <property name="text">
+          <string>Refresh</string>
+         </property>
+        </widget>
        </item>
       </layout>
      </item>
@@ -282,7 +289,7 @@
        <item>
         <widget class="QLabel" name="label_3">
          <property name="text">
-          <string>X:</string>
+          <string>Position X:</string>
          </property>
         </widget>
        </item>
@@ -337,12 +344,66 @@
        <item>
         <widget class="QLabel" name="Name">
          <property name="text">
-          <string>Name</string>
+          <string>Name:</string>
          </property>
         </widget>
        </item>
        <item>
+        <spacer name="horizontalSpacer">
+         <property name="orientation">
+          <enum>Qt::Horizontal</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>40</width>
+           <height>20</height>
+          </size>
+         </property>
+        </spacer>
+       </item>
+       <item>
         <widget class="QLineEdit" name="lineEditName"/>
+       </item>
+       <item>
+        <widget class="QCheckBox" name="checkBoxAllowRename">
+         <property name="text">
+          <string>Allow Renaming</string>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </item>
+     <item>
+      <layout class="QHBoxLayout" name="horizontalLayout_3" stretch="0,0,0">
+       <property name="topMargin">
+        <number>0</number>
+       </property>
+       <item>
+        <widget class="QLabel" name="label_19">
+         <property name="text">
+          <string>Entity Namespace</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <spacer name="horizontalSpacer_2">
+         <property name="orientation">
+          <enum>Qt::Horizontal</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>40</width>
+           <height>20</height>
+          </size>
+         </property>
+        </spacer>
+       </item>
+       <item>
+        <widget class="QLineEdit" name="lineEditNamespace">
+         <property name="toolTip">
+          <string>Spawn the entity with all its interfaces under this namespace.</string>
+         </property>
+        </widget>
        </item>
       </layout>
      </item>

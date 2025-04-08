@@ -194,14 +194,16 @@ void MyWidget::SpawnButton() {
     simulation_interfaces::srv::SpawnEntity::Request request;
     request.name = ui_->lineEditName->text().toStdString();
     request.uri = ui_->ComboSpawables->currentText().toStdString();
-    request.allow_renaming = true;
+    request.entity_namespace = ui_->lineEditNamespace->text().toStdString();
+    request.allow_renaming = ui_->checkBoxAllowRename->isChecked();
+
     request.initial_pose.pose.position.x = ui_->doubleSpinBoxX->value();
     request.initial_pose.pose.position.y = ui_->doubleSpinBoxY->value();
     request.initial_pose.pose.position.z = ui_->doubleSpinBoxZ->value();
     // Create a client for the SpawnEntity service
     Service<simulation_interfaces::srv::SpawnEntity> service("/spawn_entity", node_);
     auto response = service.call_service_sync(request);
-    if (response)
+    if (response && response->result.result == simulation_interfaces::msg::Result::RESULT_OK)
     {
         QString message = QString::asprintf("Spawned as %s", response->entity_name.c_str());
         QMessageBox::information(this, "Success", message);
