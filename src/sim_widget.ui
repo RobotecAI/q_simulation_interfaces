@@ -7,22 +7,12 @@
     <x>0</x>
     <y>0</y>
     <width>675</width>
-    <height>776</height>
+    <height>838</height>
    </rect>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout_4">
    <item>
     <layout class="QGridLayout" name="gridLayout">
-     <item row="3" column="0">
-      <widget class="QPushButton" name="stepSimButton">
-       <property name="text">
-        <string>StepSimulation</string>
-       </property>
-      </widget>
-     </item>
-     <item row="1" column="2">
-      <widget class="QListWidget" name="listCapabilities"/>
-     </item>
      <item row="0" column="0">
       <widget class="QLabel" name="label_16">
        <property name="text">
@@ -30,14 +20,45 @@
        </property>
       </widget>
      </item>
+     <item row="5" column="0">
+      <widget class="QPushButton" name="stepSimButton">
+       <property name="text">
+        <string>StepSimulation</string>
+       </property>
+      </widget>
+     </item>
+     <item row="2" column="2">
+      <widget class="QLabel" name="simStateLabel">
+       <property name="text">
+        <string/>
+       </property>
+      </widget>
+     </item>
      <item row="2" column="0">
+      <widget class="QPushButton" name="getSimStateBtn">
+       <property name="text">
+        <string>GetSimState</string>
+       </property>
+      </widget>
+     </item>
+     <item row="1" column="2">
+      <widget class="QListWidget" name="listCapabilities"/>
+     </item>
+     <item row="3" column="0">
+      <widget class="QPushButton" name="setSimStateButton">
+       <property name="text">
+        <string>SetSimState</string>
+       </property>
+      </widget>
+     </item>
+     <item row="4" column="0">
       <widget class="QPushButton" name="resetSimButton">
        <property name="text">
         <string>ResetSim</string>
        </property>
       </widget>
      </item>
-     <item row="2" column="2">
+     <item row="4" column="2">
       <layout class="QHBoxLayout" name="horizontalLayout_4">
        <item>
         <widget class="QLabel" name="label_17">
@@ -59,24 +80,17 @@
       </widget>
      </item>
      <item row="3" column="2">
-      <layout class="QHBoxLayout" name="horizontalLayout_11">
+      <widget class="QComboBox" name="simStateToSetComboBox"/>
+     </item>
+     <item row="5" column="2">
+      <layout class="QHBoxLayout" name="horizontalLayout_7">
        <item>
-        <widget class="QSpinBox" name="stepsSpinBox">
-         <property name="maximum">
-          <number>999999999</number>
-         </property>
-         <property name="value">
-          <number>100</number>
-         </property>
-        </widget>
+        <widget class="QSpinBox" name="stepsSpinBox"/>
        </item>
        <item>
         <widget class="QProgressBar" name="simProgressBar">
          <property name="value">
           <number>0</number>
-         </property>
-         <property name="format">
-          <string>%p%</string>
          </property>
         </widget>
        </item>

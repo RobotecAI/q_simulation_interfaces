@@ -8,6 +8,8 @@
 #include <simulation_interfaces/srv/get_simulator_features.hpp>
 #include <simulation_interfaces/srv/reset_simulation.hpp>
 #include <simulation_interfaces/msg/result.hpp>
+#include <simulation_interfaces/srv/get_simulation_state.hpp>
+#include <simulation_interfaces/srv/set_simulation_state.hpp>
 #include <rclcpp/rclcpp.hpp>
 #include <rclcpp_action/rclcpp_action.hpp>
 #include <type_traits>

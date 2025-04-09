@@ -27,6 +27,9 @@ private:
   void GetSimFeatures();
   void ResetSimulation();
   void StepSimulation();
+  void GetSimulationState();
+  void SetSimulationState();
+
 
   void ActionThreadWorker(int steps);
   std::thread actionThread_;

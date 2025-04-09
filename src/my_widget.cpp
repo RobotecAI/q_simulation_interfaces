@@ -37,10 +37,15 @@ MyWidget::MyWidget(QWidget *parent)
     ui_->setupUi(this);
     node_ = rclcpp::Node::make_shared("qt_gui_node");
 
-    // propate reset scope combo
+    // propagate reset scope combo
     for (const auto& [name, _] : ScopeNameToId)
     {
         ui_->resetModeCombo->addItem(QString::fromStdString(name));
+    }
+    // propagate state combo
+    for (const auto& [name, _] : SimStateNameToId)
+    {
+        ui_->simStateToSetComboBox->addItem(QString::fromStdString(name));
     }
 
     connect(ui_->PushButtonRefresh, &QPushButton::clicked, this, &MyWidget::GetSpawnables);
@@ -53,11 +58,52 @@ MyWidget::MyWidget(QWidget *parent)
     connect(ui_->GetSimCapabilites, &QPushButton::clicked, this, &MyWidget::GetSimFeatures);
     connect(ui_->resetSimButton, &QPushButton::clicked, this, &MyWidget::ResetSimulation);
     connect(ui_->stepSimButton, &QPushButton::clicked, this, &MyWidget::StepSimulation);
+    connect(ui_->getSimStateBtn, &QPushButton::clicked, this, &MyWidget::GetSimulationState);
+    connect(ui_->setSimStateButton, &QPushButton::clicked, this, &MyWidget::SetSimulationState);
 }
 
 MyWidget::~MyWidget() {
     delete ui_;
 }
+
+
+void MyWidget::GetSimulationState()
+{
+    Service<simulation_interfaces::srv::GetSimulationState> service("/get_simulation_state", node_);
+    auto response = service.call_service_sync();
+    if (response)
+    {
+        int stateId = response->state.state;
+        QString stateName;
+        auto it = SimStateIdToName.find(stateId);
+        if (it == SimStateIdToName.end())
+        {
+            stateName = QString::asprintf("Unknow state %d", stateId);
+        }
+        else
+        {
+            stateName = QString::fromStdString(it->second);
+        }
+        ui_->simStateLabel->setText(stateName);
+    }
+
+}
+
+void MyWidget::SetSimulationState()
+{
+    simulation_interfaces::srv::SetSimulationState::Request request;
+    auto selectedMode = ui_->simStateToSetComboBox->currentText();
+    auto it = SimStateNameToId.find(selectedMode.toStdString());
+    Q_ASSERT(it != SimStateNameToId.end());
+    Service<simulation_interfaces::srv::SetSimulationState> service("/set_simulation_state", node_);
+    request.state.state = it->second;
+    auto response = service.call_service_sync(request);
+    if (response)
+    {
+        GetSimulationState();
+    }
+}
+
 
 void MyWidget::ActionThreadWorker(int steps) {
 
@@ -74,7 +120,6 @@ void MyWidget::ActionThreadWorker(int steps) {
             // Handle feedback here
             float progress = static_cast<float>(feedback->completed_steps) / feedback->remaining_steps;
             ui_->simProgressBar->setValue(static_cast<int>(progress * 100));
-            RCLCPP_INFO(this->node_->get_logger(), "Feedback received: %d/%d", feedback->completed_steps, feedback->remaining_steps);
         };
     auto goal_handle_future = client->async_send_goal(*goal, send_goal_options);
     if (rclcpp::spin_until_future_complete(node_, goal_handle_future) != rclcpp::FutureReturnCode::SUCCESS) {
