@@ -4,7 +4,8 @@
 #include "service.h"
 #include <tf2/LinearMath/Quaternion.h>
 #include <QDebug>
-
+#include <rclcpp_action/create_client.hpp>
+#include <simulation_interfaces/action/simulate_steps.hpp>
 #include "stringToKeys.h"
 
 
@@ -39,7 +40,6 @@ MyWidget::MyWidget(QWidget *parent)
     // propate reset scope combo
     for (const auto& [name, _] : ScopeNameToId)
     {
-        std::cout << "Name: " << name << std::endl;
         ui_->resetModeCombo->addItem(QString::fromStdString(name));
     }
 
@@ -52,10 +52,59 @@ MyWidget::MyWidget(QWidget *parent)
     connect(ui_->despawnAll, &QPushButton::clicked, this, &MyWidget::DespawnnAll );
     connect(ui_->GetSimCapabilites, &QPushButton::clicked, this, &MyWidget::GetSimFeatures);
     connect(ui_->resetSimButton, &QPushButton::clicked, this, &MyWidget::ResetSimulation);
+    connect(ui_->stepSimButton, &QPushButton::clicked, this, &MyWidget::StepSimulation);
 }
 
 MyWidget::~MyWidget() {
     delete ui_;
+}
+
+void MyWidget::ActionThreadWorker(int steps) {
+
+    using SimulateSteps=simulation_interfaces::action::SimulateSteps;
+    auto client = rclcpp_action::create_client<SimulateSteps>(node_, "/simulate_steps");
+
+    auto send_goal_options = rclcpp_action::Client<SimulateSteps>::SendGoalOptions();
+    auto goal = std::make_shared<SimulateSteps::Goal>();
+    goal->steps = steps;
+
+    send_goal_options.feedback_callback =
+        [this](rclcpp_action::ClientGoalHandle<SimulateSteps>::SharedPtr goal_handle,
+               const std::shared_ptr<const SimulateSteps::Feedback> feedback) {
+            // Handle feedback here
+            float progress = static_cast<float>(feedback->completed_steps) / feedback->remaining_steps;
+            ui_->simProgressBar->setValue(static_cast<int>(progress * 100));
+            RCLCPP_INFO(this->node_->get_logger(), "Feedback received: %d/%d", feedback->completed_steps, feedback->remaining_steps);
+        };
+    auto goal_handle_future = client->async_send_goal(*goal, send_goal_options);
+    if (rclcpp::spin_until_future_complete(node_, goal_handle_future) != rclcpp::FutureReturnCode::SUCCESS) {
+        RCLCPP_ERROR(node_->get_logger(), "Failed to call service");
+        return;
+    }
+    auto goal_handle = goal_handle_future.get();
+    auto result_future = client->async_get_result(goal_handle);
+    if (rclcpp::spin_until_future_complete(node_, result_future) != rclcpp::FutureReturnCode::SUCCESS) {
+        RCLCPP_ERROR(node_->get_logger(), "Failed to call service");
+        return;
+    }
+    auto result = result_future.get();
+    if (result.code == rclcpp_action::ResultCode::SUCCEEDED) {
+        RCLCPP_INFO(node_->get_logger(), "Simulation completed successfully");
+    } else {
+        RCLCPP_ERROR(node_->get_logger(), "Simulation failed");
+    }
+
+
+}
+void MyWidget::StepSimulation() {
+
+    int steps = ui_->stepsSpinBox->value();
+
+    if (actionThread_.joinable())
+    {
+        actionThread_.join();
+    }
+    actionThread_ = std::thread(&MyWidget::ActionThreadWorker, this, steps);
 }
 
 void MyWidget::ResetSimulation() {
@@ -69,6 +118,7 @@ void MyWidget::ResetSimulation() {
     auto response = service.call_service_sync(request);
 
 }
+
 void MyWidget::GetSimFeatures()
 {
     Service<simulation_interfaces::srv::GetSimulatorFeatures> service("/get_simulation_features", node_);

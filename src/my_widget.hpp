@@ -26,6 +26,10 @@ private:
   void DespawnnAll();
   void GetSimFeatures();
   void ResetSimulation();
+  void StepSimulation();
+
+  void ActionThreadWorker(int steps);
+  std::thread actionThread_;
 
   Ui::simWidgetUi *ui_;
   rclcpp::Node::SharedPtr node_;
