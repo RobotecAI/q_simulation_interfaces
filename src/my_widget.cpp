@@ -57,9 +57,11 @@ MyWidget::MyWidget(QWidget *parent)
     connect(ui_->despawnAll, &QPushButton::clicked, this, &MyWidget::DespawnnAll );
     connect(ui_->GetSimCapabilites, &QPushButton::clicked, this, &MyWidget::GetSimFeatures);
     connect(ui_->resetSimButton, &QPushButton::clicked, this, &MyWidget::ResetSimulation);
-    connect(ui_->stepSimButton, &QPushButton::clicked, this, &MyWidget::StepSimulation);
+    connect(ui_->stepSimButtonAction, &QPushButton::clicked, this, &MyWidget::StepSimulation);
     connect(ui_->getSimStateBtn, &QPushButton::clicked, this, &MyWidget::GetSimulationState);
     connect(ui_->setSimStateButton, &QPushButton::clicked, this, &MyWidget::SetSimulationState);
+    connect(ui_->stepSimServiceButton, &QPushButton::clicked, this, &MyWidget::StepSimulationService);
+    connect(ui_->ComboEntities, &QComboBox::currentTextChanged, this, &MyWidget::GetEntityState);
 }
 
 MyWidget::~MyWidget() {
@@ -187,11 +189,24 @@ void MyWidget::GetSimFeatures()
         const QString labelNotSupported = u8"❌";
         bool isSupported = features.find(featrueId) != features.end();
         QString label = QString(featureName.c_str()) + " : " + (isSupported ? labelSupported : labelNotSupported);
-        ui_->listCapabilities->addItem(label);
+        QListWidgetItem *item = new QListWidgetItem(label);
+        item->setTextAlignment(Qt::AlignLeft);
+        item->setText(label);
+        item->setToolTip(QString::fromStdString(FeatureDescription.at(featrueId)));
+        ui_->listCapabilities->addItem(item);
     }
 
 }
 
+void MyWidget::StepSimulationService() {
+    simulation_interfaces::srv::StepSimulation::Request request;
+    request.steps = ui_->stepsSpinBox->value();
+    Service<simulation_interfaces::srv::StepSimulation> service("/step_simulation", node_);
+    auto response = service.call_service_sync(request);
+    if (response) {
+        // Handle the response if needed
+    }
+}
 void MyWidget::DespawnButton() {
     simulation_interfaces::srv::DeleteEntity::Request request;
     request.entity = ui_->ComboEntities->currentText().toStdString();

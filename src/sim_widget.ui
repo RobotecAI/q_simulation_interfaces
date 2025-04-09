@@ -7,25 +7,17 @@
     <x>0</x>
     <y>0</y>
     <width>675</width>
-    <height>838</height>
+    <height>869</height>
    </rect>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout_4">
    <item>
     <layout class="QGridLayout" name="gridLayout">
-     <item row="0" column="0">
-      <widget class="QLabel" name="label_16">
-       <property name="text">
-        <string>Simulator State</string>
-       </property>
-      </widget>
+     <item row="1" column="2">
+      <widget class="QListWidget" name="listCapabilities"/>
      </item>
-     <item row="5" column="0">
-      <widget class="QPushButton" name="stepSimButton">
-       <property name="text">
-        <string>StepSimulation</string>
-       </property>
-      </widget>
+     <item row="3" column="2">
+      <widget class="QComboBox" name="simStateToSetComboBox"/>
      </item>
      <item row="2" column="2">
       <widget class="QLabel" name="simStateLabel">
@@ -41,22 +33,40 @@
        </property>
       </widget>
      </item>
-     <item row="1" column="2">
-      <widget class="QListWidget" name="listCapabilities"/>
-     </item>
-     <item row="3" column="0">
-      <widget class="QPushButton" name="setSimStateButton">
-       <property name="text">
-        <string>SetSimState</string>
-       </property>
-      </widget>
-     </item>
      <item row="4" column="0">
       <widget class="QPushButton" name="resetSimButton">
        <property name="text">
         <string>ResetSim</string>
        </property>
       </widget>
+     </item>
+     <item row="1" column="0">
+      <widget class="QPushButton" name="GetSimCapabilites">
+       <property name="text">
+        <string>GetSimCapabilities</string>
+       </property>
+      </widget>
+     </item>
+     <item row="5" column="2">
+      <layout class="QHBoxLayout" name="horizontalLayout_7">
+       <item>
+        <widget class="QSpinBox" name="stepsSpinBox">
+         <property name="minimum">
+          <number>0</number>
+         </property>
+         <property name="maximum">
+          <number>1000000000</number>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QProgressBar" name="simProgressBar">
+         <property name="value">
+          <number>0</number>
+         </property>
+        </widget>
+       </item>
+      </layout>
      </item>
      <item row="4" column="2">
       <layout class="QHBoxLayout" name="horizontalLayout_4">
@@ -72,25 +82,33 @@
        </item>
       </layout>
      </item>
-     <item row="1" column="0">
-      <widget class="QPushButton" name="GetSimCapabilites">
+     <item row="0" column="0">
+      <widget class="QLabel" name="label_16">
        <property name="text">
-        <string>GetSimCapabilities</string>
+        <string>Simulator State</string>
        </property>
       </widget>
      </item>
-     <item row="3" column="2">
-      <widget class="QComboBox" name="simStateToSetComboBox"/>
+     <item row="3" column="0">
+      <widget class="QPushButton" name="setSimStateButton">
+       <property name="text">
+        <string>SetSimState</string>
+       </property>
+      </widget>
      </item>
-     <item row="5" column="2">
-      <layout class="QHBoxLayout" name="horizontalLayout_7">
+     <item row="5" column="0">
+      <layout class="QVBoxLayout" name="verticalLayout_6">
        <item>
-        <widget class="QSpinBox" name="stepsSpinBox"/>
+        <widget class="QPushButton" name="stepSimServiceButton">
+         <property name="text">
+          <string>StepSimService</string>
+         </property>
+        </widget>
        </item>
        <item>
-        <widget class="QProgressBar" name="simProgressBar">
-         <property name="value">
-          <number>0</number>
+        <widget class="QPushButton" name="stepSimButtonAction">
+         <property name="text">
+          <string>StepSimulationAction</string>
          </property>
         </widget>
        </item>

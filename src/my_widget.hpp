@@ -29,6 +29,7 @@ private:
   void StepSimulation();
   void GetSimulationState();
   void SetSimulationState();
+  void StepSimulationService();
 
 
   void ActionThreadWorker(int steps);

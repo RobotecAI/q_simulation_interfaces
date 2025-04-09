@@ -31,7 +31,34 @@ const std::map<int, std::string> FeatureToName
                 {32, "STEP_SIMULATION_MULTIPLE"},
                 {33, "STEP_SIMULATION_ACTION"},
         };
-
+const std::map<int, std::string> FeatureDescription
+        {
+                {0,  "Supports spawn interface (SpawnEntity)."},
+                {1,  "Supports deleting entities (DeleteEntity)."},
+                {2,  "Supports predefined named poses (GetNamedPoses)."},
+                {3,  "Supports pose bounds (GetNamedPoseBounds)."},
+                {4,  "Supports entity tags in interfaces using EntityFilters, such as GetEntities."},
+                {5,  "Supports entity bounds (GetEntityBounds)."},
+                {6,  "Supports entity filtering with bounds with TYPE_BOX."},
+                {7,  "Supports entity filtering with Bounds TYPE_CONVEX_HULL."},
+                {8,  "Supports entity categories, such as in use with EntityFilters or SetEntityInfo."},
+                {9,  "Supports SpawnEntity resource_string field."},
+                {10, "Supports GetEntityState interface."},
+                {11, "Supports SetEntityState interface."},
+                {12, "Supports GetEntityInfo interface."},
+                {13, "Supports SetEntityInfo interface."},
+                {14, "Supports GetSpawnables interface."},
+                {20, "Supports one or more ways to reset the simulation through ResetSimulation."},
+                {21, "Supports SCOPE_TIME flag for resetting"},
+                {22, "Supports SCOPE_STATE flag for resetting."},
+                {23, "Supports SCOPE_SPAWNED flag for resetting."},
+                {24, "Supports GetSimulationState interface."},
+                {25, "Supports SetSimulationState interface. Check SIMULATION_STATE_PAUSE feature for setting STATE_PAUSED."},
+                {26, "Supports the STATE_PAUSED SimulationState in SetSimulationState interface."},
+                {31, "Supports single stepping through simulation with StepSimulation interface."},
+                {32, "Supports multi-stepping through simulation, either through StepSimulation service or StepSimulation action."},
+                {33, "Supports SimulateSteps action interface."},
+        };
 const std::map<std::string, int> ScopeNameToId
         {
                 {"SCOPE_DEFAULT", 0},
