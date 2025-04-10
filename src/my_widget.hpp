@@ -20,10 +20,9 @@ private:
   void GetSpawnables();
   void SpawnButton();
   void GetAllEntities();
-  void GetEntityState();
+  void GetEntityState(bool silent = false);
   void SetEntityState();
   void DespawnButton();
-  void DespawnnAll();
   void GetSimFeatures();
   void ResetSimulation();
   void StepSimulation();

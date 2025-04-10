@@ -143,13 +143,6 @@
       </widget>
      </item>
      <item>
-      <widget class="QPushButton" name="despawnAll">
-       <property name="text">
-        <string>DespawnAll</string>
-       </property>
-      </widget>
-     </item>
-     <item>
       <layout class="QVBoxLayout" name="verticalLayout_3">
        <item>
         <widget class="QPushButton" name="getEntityStateButton">

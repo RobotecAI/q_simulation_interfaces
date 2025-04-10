@@ -54,14 +54,15 @@ MyWidget::MyWidget(QWidget *parent)
     connect(ui_->getEntityStateButton, &QPushButton::clicked, this, &MyWidget::GetEntityState);
     connect(ui_->setEntityStateButton, &QPushButton::clicked, this, &MyWidget::SetEntityState);
     connect(ui_->despawnButton, &QPushButton::clicked, this, &MyWidget::DespawnButton);
-    connect(ui_->despawnAll, &QPushButton::clicked, this, &MyWidget::DespawnnAll );
     connect(ui_->GetSimCapabilites, &QPushButton::clicked, this, &MyWidget::GetSimFeatures);
     connect(ui_->resetSimButton, &QPushButton::clicked, this, &MyWidget::ResetSimulation);
     connect(ui_->stepSimButtonAction, &QPushButton::clicked, this, &MyWidget::StepSimulation);
     connect(ui_->getSimStateBtn, &QPushButton::clicked, this, &MyWidget::GetSimulationState);
     connect(ui_->setSimStateButton, &QPushButton::clicked, this, &MyWidget::SetSimulationState);
     connect(ui_->stepSimServiceButton, &QPushButton::clicked, this, &MyWidget::StepSimulationService);
-    connect(ui_->ComboEntities, &QComboBox::currentTextChanged, this, &MyWidget::GetEntityState);
+    connect(ui_->ComboEntities, &QComboBox::currentTextChanged, this, [this](){
+        this->GetEntityState(true);
+    });
 }
 
 MyWidget::~MyWidget() {
@@ -214,17 +215,6 @@ void MyWidget::DespawnButton() {
     service.call_service_sync(request);
 }
 
-void MyWidget::DespawnnAll() {
-    for (int i =0; i < ui_->ComboEntities->count(); i++)
-    {
-        simulation_interfaces::srv::DeleteEntity::Request request;
-        request.entity = ui_->ComboEntities->itemText(i).toStdString();
-        Service<simulation_interfaces::srv::DeleteEntity> service("/delete_entity", node_);
-        service.call_service_sync(request);
-    }
-
-}
-
 void MyWidget::GetAllEntities() {
     Service<simulation_interfaces::srv::GetEntities> service("/get_entities", node_);
     auto response = service.call_service_sync();
@@ -237,12 +227,12 @@ void MyWidget::GetAllEntities() {
     }
 }
 
-void MyWidget::GetEntityState() {
+void MyWidget::GetEntityState(bool silent) {
     simulation_interfaces::srv::GetEntityState::Request request;
     request.entity = ui_->ComboEntities->currentText().toStdString();
 
     Service<simulation_interfaces::srv::GetEntityState> service("/get_entity_state", node_);
-    auto response = service.call_service_sync(request);
+    auto response = service.call_service_sync(request, silent);
     if (response) {
         ui_->StatePosX->setValue(response->state.pose.position.x);
         ui_->StatePosY->setValue(response->state.pose.position.y);
@@ -343,9 +333,19 @@ void MyWidget::GetSpawnables() {
         return;
     }
     // Process the response
+    QString selectedSpawnable = ui_->ComboSpawables->currentText();
     ui_->ComboSpawables->clear();
+
     for (const auto &spawnable: response->spawnables) {
         ui_->ComboSpawables->addItem(QString::fromStdString(spawnable.uri));
+    }
+    if (ui_->ComboSpawables->findText(selectedSpawnable) != -1)
+    {
+        ui_->ComboSpawables->setCurrentText(selectedSpawnable);
+    }
+    else
+    {
+        ui_->ComboSpawables->setCurrentIndex(0);
     }
 }
 

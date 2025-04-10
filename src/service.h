@@ -34,17 +34,21 @@ public:
         }
     }
 
-    std::optional<Response> call_service_sync(const Request &request = Request()) {
+    std::optional<Response> call_service_sync(const Request &request = Request(), bool silent = false) {
 
-        if constexpr (std::is_same<simulation_interfaces::srv::GetSimulatorFeatures,T>())
+        if constexpr (std::is_same<simulation_interfaces::srv::GetSimulatorFeatures,T>() )
         {
             return call_service_sync_NoCheck(request);
         } else {
+            if (silent)
+            {
+                return call_service_sync_NoCheck(request);
+            }
             return call_service_sync_Check(request);
         }
     }
 private:
-    std::optional<Response> call_service_sync_Check(const Request &request) {
+    std::optional<Response> call_service_sync_Check(const Request &request){
         std::shared_ptr <Request> req = std::make_shared<Request>(request);
         auto future = client_->async_send_request(req);
         if (rclcpp::spin_until_future_complete(node_, future) !=
