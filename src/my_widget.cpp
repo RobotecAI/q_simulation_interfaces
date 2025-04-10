@@ -336,6 +336,11 @@ void MyWidget::GetSpawnables() {
     QString selectedSpawnable = ui_->ComboSpawables->currentText();
     ui_->ComboSpawables->clear();
 
+    // sort
+    std::sort(response->spawnables.begin(), response->spawnables.end(),
+              [](const auto &a, const auto &b) {
+                  return a.uri < b.uri;
+              });
     for (const auto &spawnable: response->spawnables) {
         ui_->ComboSpawables->addItem(QString::fromStdString(spawnable.uri));
     }

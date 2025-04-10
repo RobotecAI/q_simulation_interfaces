@@ -19,7 +19,7 @@ set(SOURCES src/main.cpp
             src/my_widget.cpp)
 add_executable(${PROJECT_NAME} ${SOURCES}
 )
-
+qt_add_resources(${PROJECT_NAME} "resources/lightstyle.qrc")
 ament_target_dependencies(${PROJECT_NAME}
   rclcpp rclcpp_action simulation_interfaces tf2
 )
