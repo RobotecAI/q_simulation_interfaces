@@ -99,39 +99,44 @@ void SimulationPanel::SetSimulationState()
 }
 
 void SimulationPanel::ActionThreadWorker(int steps) {
+    // create node
+    auto node = rclcpp::Node::make_shared("qt_gui_action_node");
     using SimulateSteps=simulation_interfaces::action::SimulateSteps;
-    auto client = rclcpp_action::create_client<SimulateSteps>(node_, "/simulate_steps");
+    auto client = rclcpp_action::create_client<SimulateSteps>(node, "/simulate_steps");
 
     auto send_goal_options = rclcpp_action::Client<SimulateSteps>::SendGoalOptions();
     auto goal = std::make_shared<SimulateSteps::Goal>();
     goal->steps = steps;
-
     send_goal_options.feedback_callback =
         [this](rclcpp_action::ClientGoalHandle<SimulateSteps>::SharedPtr goal_handle,
                const std::shared_ptr<const SimulateSteps::Feedback> feedback) {
             float progress = static_cast<float>(feedback->completed_steps) / feedback->remaining_steps;
             ui_->simProgressBar->setValue(static_cast<int>(progress * 100));
         };
-    
-    // Use wait_for instead of spin_until_future_complete
-    auto goal_handle_future = client->async_send_goal(*goal, send_goal_options);
-    if (goal_handle_future.wait_for(std::chrono::seconds(10)) != std::future_status::ready) {
-        RCLCPP_ERROR(node_->get_logger(), "Failed to send goal");
+    send_goal_options.goal_response_callback = [this](rclcpp_action::ClientGoalHandle<SimulateSteps>::SharedPtr goal_handle) {
+        if (!goal_handle) {
+            RCLCPP_ERROR(node_->get_logger(), "Goal was rejected by the action server");
+        } else {
+            RCLCPP_INFO(node_->get_logger(), "Goal accepted by the action server");
+        }
+    };
+    send_goal_options.result_callback = [this](const rclcpp_action::ClientGoalHandle<SimulateSteps>::WrappedResult &result) {
+        if (result.code == rclcpp_action::ResultCode::SUCCEEDED) {
+            RCLCPP_INFO(node_->get_logger(), "Simulation completed successfully");
+        } else {
+            RCLCPP_ERROR(node_->get_logger(), "Simulation failed");
+        }
+    };
+    auto goal_handle = client->async_send_goal(*goal, send_goal_options);
+    if (rclcpp::spin_until_future_complete(node, goal_handle) != rclcpp::FutureReturnCode::SUCCESS) {
+        RCLCPP_ERROR(node->get_logger(), "Failed to call action");
         return;
     }
-    auto goal_handle = goal_handle_future.get();
-    
-    auto result_future = client->async_get_result(goal_handle);
-    if (result_future.wait_for(std::chrono::seconds(30)) != std::future_status::ready) {
-        RCLCPP_ERROR(node_->get_logger(), "Failed to get result");
+    auto goal_handle_result = goal_handle.get();
+    auto result_future = client->async_get_result(goal_handle_result);
+    if (rclcpp::spin_until_future_complete(node, result_future) != rclcpp::FutureReturnCode::SUCCESS) {
+        RCLCPP_ERROR(node->get_logger(), "Failed to get action result");
         return;
-    }
-    auto result = result_future.get();
-    
-    if (result.code == rclcpp_action::ResultCode::SUCCEEDED) {
-        RCLCPP_INFO(node_->get_logger(), "Simulation completed successfully");
-    } else {
-        RCLCPP_ERROR(node_->get_logger(), "Simulation failed");
     }
 }
 
@@ -294,21 +299,11 @@ void SimulationPanel::SpawnButton() {
 }
 
 void SimulationPanel::GetSpawnables() {
-    auto client = node_->create_client<simulation_interfaces::srv::GetSpawnables>("/get_spawnables");
-    if (!client->wait_for_service(std::chrono::seconds(10))) {
-        RCLCPP_ERROR(node_->get_logger(), "Service not available after waiting");
-        return;
-    }
-    auto request = std::make_shared<simulation_interfaces::srv::GetSpawnables::Request>();
 
-    auto future = client->async_send_request(request);
-    if (future.wait_for(std::chrono::seconds(10)) != std::future_status::ready) {
-        RCLCPP_ERROR(node_->get_logger(), "Failed to call service");
-        return;
-    }
-    auto response = future.get();
-    if (response->result.result != simulation_interfaces::msg::Result::RESULT_OK) {
-        RCLCPP_ERROR(node_->get_logger(), "Service call failed: %s", response->result.error_message.c_str());
+    Service<simulation_interfaces::srv::GetSpawnables>service("/get_spawnables", node_);
+    auto response = service.call_service_sync();
+    if (!response) {
+        QMessageBox::warning(this, "Error", "Failed to get spawnables");
         return;
     }
     QString selectedSpawnable = ui_->ComboSpawables->currentText();
