@@ -9,11 +9,14 @@
 
   <buildtool_depend>ament_cmake</buildtool_depend>
   <depend>rclcpp</depend>
+  <depend>pluginlib</depend>
+  <depend>rviz_common</depend>
 
   <exec_depend>qt5-qmake</exec_depend>
   <exec_depend>qtbase5-dev</exec_depend>
 
   <export>
     <build_type>ament_cmake</build_type>
+    <rviz plugin="${prefix}/q_simulation_plugins.xml"/>
   </export>
 </package>
