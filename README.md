@@ -5,14 +5,13 @@ It utilizes https://github.com/ros-simulation/simulation_interfaces to change th
 
 # Prerequisites
 
-I don't know. ROS 2 Humble and libqt5-dev at least.
+I don't know. ROS 2 Humble and libqt5-dev at least and ros2-$ROS_DISTRO-simulation-interfaces.
 
 # Building
 
 ```bash
-mkdir -p /tmp/ros2_ws/src
-cd /tmp/ros2_ws/src
-git clone https://github.com/ros-simulation/simulation_interfaces.git
+mkdir -p ~/ros2_ws/src
+cd ~/ros2_ws/src
 git clone https://github.com/michalpelka/q_simulation_interfaces.git
 cd ..
 colcon build --symlink-install
