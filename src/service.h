@@ -14,9 +14,34 @@
 #include <rclcpp/rclcpp.hpp>
 #include <rclcpp_action/rclcpp_action.hpp>
 #include <type_traits>
+#include <variant>
+#include <string>
+#include <QMessageBox>
 #include "stringToKeys.h"
 
+// Simple expected-like class
 template<typename T>
+class Expected {
+private:
+    std::optional<T> value_;
+    std::string error_;
+
+public:
+    Expected(const T& value) : value_(value) {}
+    Expected(T&& value) : value_(std::move(value)) {}
+    Expected(const std::string& error) : error_(error) {}
+
+    bool has_value() const { return value_.has_value(); }
+    operator bool() const { return has_value(); }
+    
+    const T& operator*() const { return *value_; }
+    const T* operator->() const { return &(*value_); }
+    
+    const std::string& error() const { return error_; }
+};
+
+template<typename T>
+
 
 class Service {
 public:
@@ -30,15 +55,12 @@ public:
     Service(const std::string &service_name, rclcpp::Node::SharedPtr node, double timeout = 1.0)
             : client_(node->create_client<T>(service_name)),
               node_(node), timeout_(std::chrono::milliseconds(static_cast<int>(timeout * 1000))) {
-        if (!client_->wait_for_service( timeout_)) {
-            RCLCPP_ERROR(node->get_logger(), "Service not available after waiting");
-        }
     }
 
-    std::optional<Response> call_service_sync(const Request &request = Request(), bool silent = false) {
+    Expected<Response> call_service_sync(const Request &request = Request(), bool silent = false) {
         if (!client_->wait_for_service( timeout_)) {
             RCLCPP_ERROR(node_->get_logger(), "Service not available after waiting");
-            return std::nullopt;
+            return Expected<Response>{"Service not available after waiting"};
         }
         if constexpr (std::is_same<simulation_interfaces::srv::GetSimulatorFeatures,T>() )
         {
@@ -52,13 +74,13 @@ public:
         }
     }
 private:
-    std::optional<Response> call_service_sync_Check(const Request &request){
+    Expected<Response> call_service_sync_Check(const Request &request){
         std::shared_ptr <Request> req = std::make_shared<Request>(request);
         auto future = client_->async_send_request(req);
         if (rclcpp::spin_until_future_complete(node_, future, timeout_) !=
             rclcpp::FutureReturnCode::SUCCESS) {
             RCLCPP_ERROR(node_->get_logger(), "Failed to call service");
-            return std::nullopt;
+            return Expected<Response>{"Failed to call service"};
         }
         auto response = future.get();
         if (response->result.result != simulation_interfaces::msg::Result::RESULT_OK) {
@@ -73,21 +95,21 @@ private:
             }
 
             QMessageBox::warning(nullptr, errorType, QString::fromStdString(response->result.error_message));
-            return *response;
+            return Expected<Response>{*response};
         }
-        return *response;
+        return Expected<Response>{*response};
     }
 
-    std::optional<Response> call_service_sync_NoCheck(const Request &request = Request() ) {
+    Expected<Response> call_service_sync_NoCheck(const Request &request = Request() ) {
         std::shared_ptr <Request> req = std::make_shared<Request>(request);
         auto future = client_->async_send_request(req);
         if (rclcpp::spin_until_future_complete(node_, future, timeout_) !=
             rclcpp::FutureReturnCode::SUCCESS) {
             RCLCPP_ERROR(node_->get_logger(), "Failed to call service");
-            return std::nullopt;
+            return Expected<Response>{"Failed to call service"};
         }
         auto response = future.get();
-        return *response;
+        return Expected<Response>{*response};
     }
 
 private:
