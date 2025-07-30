@@ -33,7 +33,7 @@ private:
 
   void ActionThreadWorker(int steps);
   std::thread actionThread_;
-
+  std::thread nodeThread_;
   Ui::simWidgetUi *ui_;
   rclcpp::Node::SharedPtr node_;
 };

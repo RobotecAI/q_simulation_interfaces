@@ -17,6 +17,7 @@
 #include "stringToKeys.h"
 
 template<typename T>
+
 class Service {
 public:
     using Request = typename T::Request;
@@ -26,16 +27,19 @@ public:
     using Client = rclcpp::Client<T>;
     using ClientSharedPtr = typename Client::SharedPtr;
 
-    Service(const std::string &service_name, rclcpp::Node::SharedPtr node)
+    Service(const std::string &service_name, rclcpp::Node::SharedPtr node, double timeout = 1.0)
             : client_(node->create_client<T>(service_name)),
-              node_(node) {
-        if (!client_->wait_for_service(std::chrono::seconds(10))) {
+              node_(node), timeout_(std::chrono::milliseconds(static_cast<int>(timeout * 1000))) {
+        if (!client_->wait_for_service( timeout_)) {
             RCLCPP_ERROR(node->get_logger(), "Service not available after waiting");
         }
     }
 
     std::optional<Response> call_service_sync(const Request &request = Request(), bool silent = false) {
-
+        if (!client_->wait_for_service( timeout_)) {
+            RCLCPP_ERROR(node_->get_logger(), "Service not available after waiting");
+            return std::nullopt;
+        }
         if constexpr (std::is_same<simulation_interfaces::srv::GetSimulatorFeatures,T>() )
         {
             return call_service_sync_NoCheck(request);
@@ -51,7 +55,7 @@ private:
     std::optional<Response> call_service_sync_Check(const Request &request){
         std::shared_ptr <Request> req = std::make_shared<Request>(request);
         auto future = client_->async_send_request(req);
-        if (rclcpp::spin_until_future_complete(node_, future) !=
+        if (rclcpp::spin_until_future_complete(node_, future, timeout_) !=
             rclcpp::FutureReturnCode::SUCCESS) {
             RCLCPP_ERROR(node_->get_logger(), "Failed to call service");
             return std::nullopt;
@@ -77,7 +81,7 @@ private:
     std::optional<Response> call_service_sync_NoCheck(const Request &request = Request() ) {
         std::shared_ptr <Request> req = std::make_shared<Request>(request);
         auto future = client_->async_send_request(req);
-        if (rclcpp::spin_until_future_complete(node_, future) !=
+        if (rclcpp::spin_until_future_complete(node_, future, timeout_) !=
             rclcpp::FutureReturnCode::SUCCESS) {
             RCLCPP_ERROR(node_->get_logger(), "Failed to call service");
             return std::nullopt;
@@ -89,4 +93,5 @@ private:
 private:
     rclcpp::Node::SharedPtr node_;
     ClientSharedPtr client_;
+    std::chrono::milliseconds timeout_;
 };

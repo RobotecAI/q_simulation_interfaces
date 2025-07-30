@@ -166,6 +166,11 @@ void SimulationPanel::GetSimFeatures()
     auto response = service.call_service_sync();
     ui_->listCapabilities->clear();
     std::set<int> features;
+    if (!response)
+    {
+        QMessageBox::warning(this, "Error", "Failed to get simulation features");
+        return;
+    }
     for (auto& feature : response->features.features)
     {
         features.emplace(feature);
