@@ -11,6 +11,8 @@ find_package(rclcpp_action REQUIRED)
 find_package(tf2 REQUIRED)
 find_package(pluginlib REQUIRED)
 find_package(rviz_common REQUIRED)
+find_package(visualization_msgs REQUIRED)
+find_package(interactive_markers REQUIRED)
 
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 set(CMAKE_CXX_STANDARD 17)
@@ -29,7 +31,7 @@ target_include_directories(${PROJECT_NAME} PUBLIC
   $<INSTALL_INTERFACE:include>
 )
 ament_target_dependencies(${PROJECT_NAME}
-  rclcpp rclcpp_action simulation_interfaces tf2 pluginlib rviz_common
+  rclcpp rclcpp_action simulation_interfaces tf2 pluginlib rviz_common  interactive_markers visualization_msgs
 )
 
 target_link_libraries(${PROJECT_NAME}

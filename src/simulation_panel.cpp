@@ -10,11 +10,13 @@
 #include "ui_sim_widget.h"
 #include "vector_utils.hpp"
 
+#include <visualization_msgs/msg/interactive_marker.hpp>
+#include <visualization_msgs/msg/interactive_marker_control.hpp>
 
 namespace q_simulation_interfaces
 {
 
-    SimulationPanel::SimulationPanel(QWidget* parent) : rviz_common::Panel(parent), ui_(new Ui::simWidgetUi)
+    SimulationWidget::SimulationWidget(QWidget* parent) : QWidget(parent), ui_(new Ui::simWidgetUi)
     {
         ui_->setupUi(this);
 
@@ -27,22 +29,22 @@ namespace q_simulation_interfaces
             ui_->simStateToSetComboBox->addItem(QString::fromStdString(name));
         }
 
-        connect(ui_->PushButtonRefresh, &QPushButton::clicked, this, &SimulationPanel::GetSpawnables);
-        connect(ui_->SpawnButton, &QPushButton::clicked, this, &SimulationPanel::SpawnButton);
-        connect(ui_->getAllEntitiesButton, &QPushButton::clicked, this, &SimulationPanel::GetAllEntities);
-        connect(ui_->getEntityStateButton, &QPushButton::clicked, this, &SimulationPanel::GetEntityState);
-        connect(ui_->setEntityStateButton, &QPushButton::clicked, this, &SimulationPanel::SetEntityState);
-        connect(ui_->despawnButton, &QPushButton::clicked, this, &SimulationPanel::DespawnButton);
-        connect(ui_->GetSimCapabilites, &QPushButton::clicked, this, &SimulationPanel::GetSimFeatures);
-        connect(ui_->resetSimButton, &QPushButton::clicked, this, &SimulationPanel::ResetSimulation);
-        connect(ui_->stepSimButtonAction, &QPushButton::clicked, this, &SimulationPanel::StepSimulation);
-        connect(ui_->getSimStateBtn, &QPushButton::clicked, this, &SimulationPanel::GetSimulationState);
-        connect(ui_->setSimStateButton, &QPushButton::clicked, this, &SimulationPanel::SetSimulationState);
-        connect(ui_->stepSimServiceButton, &QPushButton::clicked, this, &SimulationPanel::StepSimulationService);
+        connect(ui_->PushButtonRefresh, &QPushButton::clicked, this, &SimulationWidget::GetSpawnables);
+        connect(ui_->SpawnButton, &QPushButton::clicked, this, &SimulationWidget::SpawnButton);
+        connect(ui_->getAllEntitiesButton, &QPushButton::clicked, this, &SimulationWidget::GetAllEntities);
+        connect(ui_->getEntityStateButton, &QPushButton::clicked, this, &SimulationWidget::GetEntityState);
+        connect(ui_->setEntityStateButton, &QPushButton::clicked, this, &SimulationWidget::SetEntityState);
+        connect(ui_->despawnButton, &QPushButton::clicked, this, &SimulationWidget::DespawnButton);
+        connect(ui_->GetSimCapabilites, &QPushButton::clicked, this, &SimulationWidget::GetSimFeatures);
+        connect(ui_->resetSimButton, &QPushButton::clicked, this, &SimulationWidget::ResetSimulation);
+        connect(ui_->stepSimButtonAction, &QPushButton::clicked, this, &SimulationWidget::StepSimulation);
+        connect(ui_->getSimStateBtn, &QPushButton::clicked, this, &SimulationWidget::GetSimulationState);
+        connect(ui_->setSimStateButton, &QPushButton::clicked, this, &SimulationWidget::SetSimulationState);
+        connect(ui_->stepSimServiceButton, &QPushButton::clicked, this, &SimulationWidget::StepSimulationService);
         connect(ui_->ComboEntities, &QComboBox::currentTextChanged, this, [this]() { this->GetEntityState(true); });
     }
 
-    SimulationPanel::~SimulationPanel()
+    SimulationWidget::~SimulationWidget()
     {
         if (actionThread_.joinable())
         {
@@ -51,17 +53,35 @@ namespace q_simulation_interfaces
         delete ui_;
     }
 
-    void SimulationPanel::onInitialize() { node_ = rclcpp::Node::make_shared("qt_gui_node"); }
+    void SimulationWidget::intiliaze(rclcpp::Node::SharedPtr node) {
+        if (!node)
+        {
+            node_ = rclcpp::Node::make_shared("qt_gui_node");
+        }
+        else
+        {
+            node_ = node;
+        }
 
-    void SimulationPanel::setRosNode(rclcpp::Node::SharedPtr node)
-    {
-        (void)node; // Suppress unused variable warning
+        // Initialize service objects
+        getSpawnablesService_ = std::make_unique<Service<simulation_interfaces::srv::GetSpawnables>>("/get_spawnables", node_);
+        spawnEntityService_ = std::make_unique<Service<simulation_interfaces::srv::SpawnEntity>>("/spawn_entity", node_);
+        getEntitiesService_ = std::make_unique<Service<simulation_interfaces::srv::GetEntities>>("/get_entities", node_);
+        getEntityStateService_ = std::make_unique<Service<simulation_interfaces::srv::GetEntityState>>("/get_entity_state", node_);
+        setEntityStateService_ = std::make_unique<Service<simulation_interfaces::srv::SetEntityState>>("/set_entity_state", node_);
+        deleteEntityService_ = std::make_unique<Service<simulation_interfaces::srv::DeleteEntity>>("/delete_entity", node_);
+        getSimFeaturesService_ = std::make_unique<Service<simulation_interfaces::srv::GetSimulatorFeatures>>("/get_simulation_features", node_);
+        resetSimulationService_ = std::make_unique<Service<simulation_interfaces::srv::ResetSimulation>>("/reset_simulation", node_);
+        getSimulationStateService_ = std::make_unique<Service<simulation_interfaces::srv::GetSimulationState>>("/get_simulation_state", node_);
+        setSimulationStateService_ = std::make_unique<Service<simulation_interfaces::srv::SetSimulationState>>("/set_simulation_state", node_);
+        stepSimulationService_ = std::make_unique<Service<simulation_interfaces::srv::StepSimulation>>("/step_simulation", node_);
+        interactiveMarkerServer_ = std::make_unique<interactive_markers::InteractiveMarkerServer>("/simulation_interfaces_panel", node_);
+
     }
 
-    void SimulationPanel::GetSimulationState()
+     void SimulationWidget::GetSimulationState()
     {
-        Service<simulation_interfaces::srv::GetSimulationState> service("/get_simulation_state", node_);
-        auto response = service.call_service_sync();
+        auto response = getSimulationStateService_->call_service_sync();
         if (!response)
         {
             QMessageBox::warning(this, "Error",
@@ -83,15 +103,14 @@ namespace q_simulation_interfaces
         ui_->simStateLabel->setText(stateName);
     }
 
-    void SimulationPanel::SetSimulationState()
+    void SimulationWidget::SetSimulationState()
     {
         simulation_interfaces::srv::SetSimulationState::Request request;
         auto selectedMode = ui_->simStateToSetComboBox->currentText();
         auto it = SimStateNameToId.find(selectedMode.toStdString());
         Q_ASSERT(it != SimStateNameToId.end());
-        Service<simulation_interfaces::srv::SetSimulationState> service("/set_simulation_state", node_);
         request.state.state = it->second;
-        auto response = service.call_service_sync(request);
+        auto response = setSimulationStateService_->call_service_sync(request);
         if (!response)
         {
             QMessageBox::warning(this, "Error",
@@ -104,7 +123,7 @@ namespace q_simulation_interfaces
         }
     }
 
-    void SimulationPanel::ActionThreadWorker(int steps)
+    void SimulationWidget::ActionThreadWorker(int steps)
     {
         // create node
         auto node = rclcpp::Node::make_shared("qt_gui_action_node");
@@ -160,7 +179,7 @@ namespace q_simulation_interfaces
         }
     }
 
-    void SimulationPanel::StepSimulation()
+    void SimulationWidget::StepSimulation()
     {
         int steps = ui_->stepsSpinBox->value();
 
@@ -168,24 +187,22 @@ namespace q_simulation_interfaces
         {
             actionThread_.join();
         }
-        actionThread_ = std::thread(&SimulationPanel::ActionThreadWorker, this, steps);
+        actionThread_ = std::thread(&SimulationWidget::ActionThreadWorker, this, steps);
     }
 
-    void SimulationPanel::ResetSimulation()
+    void SimulationWidget::ResetSimulation()
     {
         simulation_interfaces::srv::ResetSimulation::Request request;
-        Service<simulation_interfaces::srv::ResetSimulation> service("/reset_simulation", node_);
         auto selectedMode = ui_->resetModeCombo->currentText();
         auto it = ScopeNameToId.find(selectedMode.toStdString());
         Q_ASSERT(it != ScopeNameToId.end());
         request.scope = it->second;
-        auto response = service.call_service_sync(request);
+        auto response = resetSimulationService_->call_service_sync(request);
     }
 
-    void SimulationPanel::GetSimFeatures()
+    void SimulationWidget::GetSimFeatures()
     {
-        Service<simulation_interfaces::srv::GetSimulatorFeatures> service("/get_simulation_features", node_);
-        auto response = service.call_service_sync();
+        auto response = getSimFeaturesService_->call_service_sync();
         ui_->listCapabilities->clear();
         std::set<int> features;
         if (!response)
@@ -219,12 +236,11 @@ namespace q_simulation_interfaces
         }
     }
 
-    void SimulationPanel::StepSimulationService()
+    void SimulationWidget::StepSimulationService()
     {
         simulation_interfaces::srv::StepSimulation::Request request;
         request.steps = ui_->stepsSpinBox->value();
-        Service<simulation_interfaces::srv::StepSimulation> service("/step_simulation", node_);
-        auto response = service.call_service_sync(request);
+        auto response = stepSimulationService_->call_service_sync(request);
         if (!response)
         {
             QMessageBox::warning(this, "Error",
@@ -233,12 +249,11 @@ namespace q_simulation_interfaces
         }
     }
 
-    void SimulationPanel::DespawnButton()
+    void SimulationWidget::DespawnButton()
     {
         simulation_interfaces::srv::DeleteEntity::Request request;
         request.entity = ui_->ComboEntities->currentText().toStdString();
-        Service<simulation_interfaces::srv::DeleteEntity> service("/delete_entity", node_);
-        auto response = service.call_service_sync(request);
+        auto response = deleteEntityService_->call_service_sync(request);
         if (!response)
         {
             QMessageBox::warning(this, "Error",
@@ -246,10 +261,55 @@ namespace q_simulation_interfaces
         }
     }
 
-    void SimulationPanel::GetAllEntities()
+    geometry_msgs::msg::Quaternion CreateQuaternion(double w, double x, double y, double z)
     {
-        Service<simulation_interfaces::srv::GetEntities> service("/get_entities", node_);
-        auto response = service.call_service_sync();
+        geometry_msgs::msg::Quaternion q;
+        q.w = w;
+        q.x = x;
+        q.y = y;
+        q.z = z;
+        return q;
+    }
+
+    void AddControlToInteractiveMarker(
+        visualization_msgs::msg::InteractiveMarker& interactive_marker)
+    {
+
+        // move axis x
+        const std::vector<geometry_msgs::msg::Quaternion> axesT = {
+          CreateQuaternion(1, 1, 0, 0), // x-axis
+          CreateQuaternion(1, 0, 1, 0), // y-axis
+          CreateQuaternion(1, 0, 0, 1)  // z-axis
+        };
+        const std::vector<geometry_msgs::msg::Quaternion> axesR = {
+          CreateQuaternion(1, 0, 0, 1)  // z-axis
+        };
+
+        for (const auto & axis : axesT)
+        {
+            visualization_msgs::msg::InteractiveMarkerControl control;
+            control.orientation_mode = visualization_msgs::msg::InteractiveMarkerControl::FIXED;
+            control.orientation = axis;
+            control.name = "move_" + std::to_string(axis.w);
+            control.interaction_mode = visualization_msgs::msg::InteractiveMarkerControl::MOVE_AXIS;
+            interactive_marker.controls.push_back(control);
+        }
+        for (const auto & axis : axesR)
+        {
+            visualization_msgs::msg::InteractiveMarkerControl control;
+            control.orientation_mode = visualization_msgs::msg::InteractiveMarkerControl::FIXED;
+            control.orientation = axis;
+            control.name = "rotate_" + std::to_string(axis.w);
+            control.interaction_mode = visualization_msgs::msg::InteractiveMarkerControl::ROTATE_AXIS;
+            interactive_marker.controls.push_back(control);
+        }
+
+
+    }
+
+    void SimulationWidget::GetAllEntities()
+    {
+        auto response = getEntitiesService_->call_service_sync();
         if (!response)
         {
             QMessageBox::warning(this, "Error",
@@ -264,13 +324,12 @@ namespace q_simulation_interfaces
         }
     }
 
-    void SimulationPanel::GetEntityState(bool silent)
+    void SimulationWidget::GetEntityState(bool silent)
     {
         simulation_interfaces::srv::GetEntityState::Request request;
         request.entity = ui_->ComboEntities->currentText().toStdString();
 
-        Service<simulation_interfaces::srv::GetEntityState> service("/get_entity_state", node_);
-        auto response = service.call_service_sync(request, silent);
+        auto response = getEntityStateService_->call_service_sync(request, silent);
         if (!response)
         {
             QMessageBox::warning(this, "Error",
@@ -296,9 +355,42 @@ namespace q_simulation_interfaces
         ui_->StateVelRotX->setValue(response->state.twist.angular.x);
         ui_->StateVelRotY->setValue(response->state.twist.angular.y);
         ui_->StateVelRotZ->setValue(response->state.twist.angular.z);
+
+        // update marker server
+
+        if (interactiveMarkerServer_) {
+          visualization_msgs::msg::InteractiveMarker interactive_marker;
+          interactive_marker.header.frame_id = "map";
+          interactive_marker.name = request.entity;
+          interactive_marker.description = "Manipulate entity " + request.entity;
+          interactive_marker.pose.position = response->state.pose.position;
+          interactive_marker.pose.orientation = response->state.pose.orientation;
+          interactive_marker.scale = 1.0;
+
+          AddControlToInteractiveMarker(interactive_marker);
+
+          interactive_markers::InteractiveMarkerServer::FeedbackCallback cb =[this](const auto & feedback)
+          {
+            const auto& pose = feedback->pose;
+            ui_->StatePosX->setValue(pose.position.x);
+            ui_->StatePosY->setValue(pose.position.y);
+            ui_->StatePosZ->setValue(pose.position.z);
+
+            tf2::Quaternion q = tf2::Quaternion(pose.orientation.x, pose.orientation.y,
+                                                pose.orientation.z, pose.orientation.w);
+
+            const auto axis = q.getAxis();
+            const auto angle = q.getAngle();
+            ui_->RotVector->setText(VectorToQstring(axis));
+            ui_->RotAngle->setValue(angle);
+          };
+          interactiveMarkerServer_->clear();
+          interactiveMarkerServer_->insert(interactive_marker, cb);
+          interactiveMarkerServer_->applyChanges();
+        }
     }
 
-    void SimulationPanel::SetEntityState()
+    void SimulationWidget::SetEntityState()
     {
         simulation_interfaces::srv::SetEntityState::Request request;
         request.entity = ui_->ComboEntities->currentText().toStdString();
@@ -323,8 +415,7 @@ namespace q_simulation_interfaces
         request.state.twist.angular.y = ui_->StateVelRotY->value();
         request.state.twist.angular.z = ui_->StateVelRotZ->value();
 
-        Service<simulation_interfaces::srv::SetEntityState> service("/set_entity_state", node_);
-        auto response = service.call_service_sync(request);
+        auto response = setEntityStateService_->call_service_sync(request);
         if (!response)
         {
             QMessageBox::warning(this, "Error",
@@ -332,7 +423,7 @@ namespace q_simulation_interfaces
         }
     }
 
-    void SimulationPanel::SpawnButton()
+    void SimulationWidget::SpawnButton()
     {
         simulation_interfaces::srv::SpawnEntity::Request request;
         request.name = ui_->lineEditName->text().toStdString();
@@ -343,8 +434,7 @@ namespace q_simulation_interfaces
         request.initial_pose.pose.position.x = ui_->doubleSpinBoxX->value();
         request.initial_pose.pose.position.y = ui_->doubleSpinBoxY->value();
         request.initial_pose.pose.position.z = ui_->doubleSpinBoxZ->value();
-        Service<simulation_interfaces::srv::SpawnEntity> service("/spawn_entity", node_);
-        auto response = service.call_service_sync(request);
+        auto response = spawnEntityService_->call_service_sync(request);
         if (!response)
         {
             QMessageBox::warning(this, "Error",
@@ -357,11 +447,10 @@ namespace q_simulation_interfaces
         }
     }
 
-    void SimulationPanel::GetSpawnables()
+    void SimulationWidget::GetSpawnables()
     {
 
-        Service<simulation_interfaces::srv::GetSpawnables> service("/get_spawnables", node_);
-        const auto response = service.call_service_sync();
+        const auto response = getSpawnablesService_->call_service_sync();
         if (!response)
         {
             QString errorMessage = QString::fromStdString(response.error());
