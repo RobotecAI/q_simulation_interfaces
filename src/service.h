@@ -33,28 +33,73 @@ public:
 
     bool has_value() const { return value_.has_value(); }
     operator bool() const { return has_value(); }
-    
+
     const T& operator*() const { return *value_; }
     const T* operator->() const { return &(*value_); }
-    
+
     const std::string& error() const { return error_; }
 };
 
+
 template<typename T>
+void ProduceWarningIfProblem(QWidget* parent, const QString operation, const Expected<T>& response) {
+    if (!response) {
+        auto w = QString("Failed to %1: %2").arg(operation, QString::fromStdString(response.error()));
+        QMessageBox::warning(parent, "Error", w);
+    }
 
+    // only GetSimulatorFeatures::Response does not have a result field
+    if constexpr (!std::is_same_v<T, simulation_interfaces::srv::GetSimulatorFeatures::Response>) {
+      if (response->result.result != simulation_interfaces::msg::Result::RESULT_OK) {
+        auto w = QString("Operation %1 failed: %2")
+            .arg(operation, QString::fromStdString(response->result.error_message));
+        QMessageBox::warning(parent, "Error", w);
+      }
+    }
 
-class Service {
+}
+
+class ServiceInterface  {
+public:
+  virtual void check_service_result() = 0;
+};
+
+template<typename T>
+class Service : public ServiceInterface {
 public:
     using Request = typename T::Request;
     using Response = typename T::Response;
+
     using SharedPtr = std::shared_ptr<T>;
 
     using Client = rclcpp::Client<T>;
     using ClientSharedPtr = typename Client::SharedPtr;
+    using FutureAndRequestId = typename Client::FutureAndRequestId;
 
     Service(const std::string &service_name, rclcpp::Node::SharedPtr node, double timeout = 1.0)
             : client_(node->create_client<T>(service_name)),
               node_(node), timeout_(std::chrono::milliseconds(static_cast<int>(timeout * 1000))) {
+    }
+
+    void call_service_async(std::function<void(Expected<Response>)> callback = nullptr,
+                            const Request& request = Request())
+    {
+        std::shared_ptr<Request> req = std::make_shared<Request>(request);
+        service_result_ = client_->async_send_request(req);
+        callback_ = callback;
+    }
+
+    void check_service_result() override {
+        if (!service_result_) {
+          return;
+        }
+        if (!service_result_->future.valid()) {
+            return;
+        }
+        auto response = service_result_->future.get();
+        if (callback_) {
+          callback_(Expected(*response));
+        }
     }
 
     Expected<Response> call_service_sync(const Request &request = Request(), bool silent = false) {
@@ -116,4 +161,7 @@ private:
     rclcpp::Node::SharedPtr node_;
     ClientSharedPtr client_;
     std::chrono::milliseconds timeout_;
+    std::optional<FutureAndRequestId> service_result_;
+    std::function<void(Expected<Response>)> callback_;
+
 };

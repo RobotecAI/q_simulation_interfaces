@@ -26,18 +26,14 @@ public:
         node_thread_ = std::thread([this]() {
               rclcpp::spin(node_);
           });
-
-        // Ensure the node is shutdown when the widget is closed
-        connect(this, &QWidget::destroyed, this, [this]() {
-            if (node_thread_.joinable()) {
-                node_thread_.join();
-            }
-            rclcpp::shutdown();
-        });
     }
     
     ~StandaloneWidget()
     {
+      if (node_thread_.joinable()) {
+        node_thread_.join();
+      }
+      rclcpp::shutdown();
     }
 
 private:
