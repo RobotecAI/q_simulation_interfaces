@@ -67,7 +67,9 @@ private:
   //! Called periodically to update the state of the services
   void UpdateServices();
 
-
+  //! Create and update spawn point interactive marker
+  void CreateSpawnPointMarker();
+  void UpdateSpawnPointMarker();
 
   std::thread actionThread_;
 

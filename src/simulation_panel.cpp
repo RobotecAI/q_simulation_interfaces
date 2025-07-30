@@ -92,6 +92,14 @@ namespace q_simulation_interfaces
         connect(ui_->setSimStateButton, &QPushButton::clicked, this, &SimulationWidget::SetSimulationState);
         connect(ui_->stepSimServiceButton, &QPushButton::clicked, this, &SimulationWidget::StepSimulationService);
         connect(ui_->ComboEntities, &QComboBox::currentTextChanged, this, [this]() { this->GetEntityState(true); });
+        
+        // Connect spawn position spin boxes to update marker
+        connect(ui_->doubleSpinBoxX, QOverload<double>::of(&QDoubleSpinBox::valueChanged), 
+                this, &SimulationWidget::UpdateSpawnPointMarker);
+        connect(ui_->doubleSpinBoxY, QOverload<double>::of(&QDoubleSpinBox::valueChanged), 
+                this, &SimulationWidget::UpdateSpawnPointMarker);
+        connect(ui_->doubleSpinBoxZ, QOverload<double>::of(&QDoubleSpinBox::valueChanged), 
+                this, &SimulationWidget::UpdateSpawnPointMarker);
     }
 
     SimulationWidget::~SimulationWidget()
@@ -163,6 +171,9 @@ namespace q_simulation_interfaces
 
         interactiveMarkerServer_ =
             std::make_shared<interactive_markers::InteractiveMarkerServer>("/simulation_interfaces_panel", node_);
+            
+        // Create spawn point marker
+        CreateSpawnPointMarker();
     }
 
     void SimulationWidget::GetSimulationState()
@@ -557,6 +568,86 @@ namespace q_simulation_interfaces
                 service->check_service_result();
             }
         }
+    }
+
+    void SimulationWidget::CreateSpawnPointMarker()
+    {
+        if (!interactiveMarkerServer_) {
+            return;
+        }
+
+        visualization_msgs::msg::InteractiveMarker spawnMarker;
+        spawnMarker.header.frame_id = "map";
+        spawnMarker.name = "spawn_point";
+        spawnMarker.description = "Spawn Point - Drag to set spawn location";
+        spawnMarker.scale = 1.0;
+
+        // Set initial position from GUI
+        spawnMarker.pose.position.x = ui_->doubleSpinBoxX->value();
+        spawnMarker.pose.position.y = ui_->doubleSpinBoxY->value();
+        spawnMarker.pose.position.z = ui_->doubleSpinBoxZ->value();
+        spawnMarker.pose.orientation.w = 1.0; // Default orientation
+
+        AddControlToInteractiveMarker(spawnMarker);
+
+        // Add visual marker (cube)
+        visualization_msgs::msg::InteractiveMarkerControl visualControl;
+        visualControl.always_visible = true;
+        visualControl.interaction_mode = visualization_msgs::msg::InteractiveMarkerControl::NONE;
+        
+        visualization_msgs::msg::Marker cubeMarker;
+        cubeMarker.type = visualization_msgs::msg::Marker::CUBE;
+        cubeMarker.scale.x = 0.3;
+        cubeMarker.scale.y = 0.3;
+        cubeMarker.scale.z = 0.3;
+        cubeMarker.color.r = 0.0;
+        cubeMarker.color.g = 1.0;
+        cubeMarker.color.b = 0.0;
+        cubeMarker.color.a = 0.8;
+        
+        visualControl.markers.push_back(cubeMarker);
+        spawnMarker.controls.push_back(visualControl);
+
+        // Set up feedback callback to update GUI when marker is moved
+        interactive_markers::InteractiveMarkerServer::FeedbackCallback feedbackCb = 
+            [this](const auto& feedback) {
+                if (feedback->event_type == visualization_msgs::msg::InteractiveMarkerFeedback::POSE_UPDATE) {
+                    const auto& pose = feedback->pose;
+                    
+                    // Update GUI spin boxes with new position
+                    ui_->doubleSpinBoxX->setValue(pose.position.x);
+                    ui_->doubleSpinBoxY->setValue(pose.position.y);
+                    ui_->doubleSpinBoxZ->setValue(pose.position.z);
+                }
+            };
+
+        interactiveMarkerServer_->insert(spawnMarker, feedbackCb);
+        interactiveMarkerServer_->applyChanges();
+    }
+
+    void SimulationWidget::UpdateSpawnPointMarker()
+    {
+        if (!interactiveMarkerServer_) {
+            return;
+        }
+
+        // Get current marker
+        visualization_msgs::msg::InteractiveMarker spawnMarker;
+        if (!interactiveMarkerServer_->get("spawn_point", spawnMarker)) {
+            // Marker doesn't exist, create it
+            CreateSpawnPointMarker();
+            return;
+        }
+
+        // Update position from GUI
+        geometry_msgs::msg::Pose newPose;
+        newPose.position.x = ui_->doubleSpinBoxX->value();
+        newPose.position.y = ui_->doubleSpinBoxY->value();
+        newPose.position.z = ui_->doubleSpinBoxZ->value();
+        newPose.orientation.w = 1.0;
+
+        interactiveMarkerServer_->setPose("spawn_point", newPose);
+        interactiveMarkerServer_->applyChanges();
     }
 
 } // namespace q_simulation_interfaces
