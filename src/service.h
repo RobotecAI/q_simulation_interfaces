@@ -43,12 +43,13 @@ public:
 
 template<typename T>
 void ProduceWarningIfProblem(QWidget* parent, const QString operation, const Expected<T>& response) {
-    if (!response) {
+    if (!response.has_value()) {
         auto w = QString("Failed to %1: %2").arg(operation, QString::fromStdString(response.error()));
         QMessageBox::warning(parent, "Error", w);
+        return;
     }
 
-    // only GetSimulatorFeatures::Response does not have a result field
+    // only GetSimulatorFeatures::Response does not have a result field, so check if T is not that type
     if constexpr (!std::is_same_v<T, simulation_interfaces::srv::GetSimulatorFeatures::Response>) {
       if (response->result.result != simulation_interfaces::msg::Result::RESULT_OK) {
         auto w = QString("Operation %1 failed: %2")
@@ -76,29 +77,57 @@ public:
     using ClientSharedPtr = typename Client::SharedPtr;
     using FutureAndRequestId = typename Client::FutureAndRequestId;
 
-    Service(const std::string &service_name, rclcpp::Node::SharedPtr node, double timeout = 1.0)
+    Service(const std::string &service_name, rclcpp::Node::SharedPtr node, double timeout = 0)
             : client_(node->create_client<T>(service_name)),
-              node_(node), timeout_(std::chrono::milliseconds(static_cast<int>(timeout * 1000))) {
+              node_(node), timeout_(std::chrono::milliseconds(static_cast<int>(timeout))) {
     }
 
     void call_service_async(std::function<void(Expected<Response>)> callback = nullptr,
                             const Request& request = Request())
     {
+        RCLCPP_DEBUG(node_->get_logger(), "Calling service %s", client_->get_service_name());
+
+        if (!client_->service_is_ready())
+        {
+            if (callback)
+            {
+                callback(Expected<Response>{"Service not available"});
+                RCLCPP_ERROR(node_->get_logger(), "Service %s is not available", client_->get_service_name());
+            }
+            return;
+        }
         std::shared_ptr<Request> req = std::make_shared<Request>(request);
         service_result_ = client_->async_send_request(req);
         callback_ = callback;
+        service_called_time_ = std::chrono::system_clock::now();
     }
 
     void check_service_result() override {
         if (!service_result_) {
           return;
         }
-        if (!service_result_->future.valid()) {
-            return;
+        // check duration
+        if (timeout_.count() > 0 && service_called_time_) {
+            auto duration = std::chrono::system_clock::now() - *service_called_time_;
+            if (duration > timeout_) {
+                RCLCPP_ERROR(node_->get_logger(), "Service call timed out");
+                callback_(Expected<Response>("Service call timed out"));
+                callback_ = nullptr;
+                service_result_.reset();
+                service_called_time_.reset();
+                return;
+            }
         }
-        auto response = service_result_->future.get();
-        if (callback_) {
-          callback_(Expected(*response));
+        if (service_result_->wait_for(std::chrono::seconds(0)) == std::future_status::ready)
+        {
+            auto response = service_result_->future.get();
+            if (callback_) {
+                RCLCPP_DEBUG(node_->get_logger(), "Service %s response) received", client_->get_service_name());
+                callback_(Expected(*response));
+                callback_ = nullptr;
+                service_result_.reset();
+                service_called_time_.reset();
+            }
         }
     }
 
@@ -162,6 +191,8 @@ private:
     ClientSharedPtr client_;
     std::chrono::milliseconds timeout_;
     std::optional<FutureAndRequestId> service_result_;
+    std::optional<std::chrono::time_point<std::chrono::system_clock>> service_called_time_;
     std::function<void(Expected<Response>)> callback_;
+
 
 };

@@ -13,6 +13,9 @@ find_package(pluginlib REQUIRED)
 find_package(rviz_common REQUIRED)
 find_package(visualization_msgs REQUIRED)
 find_package(interactive_markers REQUIRED)
+find_package(tf2 REQUIRED)
+find_package(tf2_ros REQUIRED)
+find_package(tf2_geometry_msgs REQUIRED)
 
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 set(CMAKE_CXX_STANDARD 17)
@@ -20,10 +23,10 @@ set(CMAKE_CXX_STANDARD 17)
 # Add UI file
 
 qt5_wrap_cpp(MOC_FILES
-  include/q_simulation_interfaces/simulation_panel.hpp
+        include/q_simulation_interfaces/simulation_panel.hpp
 )
 
-set(SOURCES src/simulation_panel.cpp)
+set(SOURCES src/simulation_widget.cpp src/simulation_panel.cpp)
 
 add_library(${PROJECT_NAME} SHARED ${SOURCES} ${MOC_FILES})
 target_include_directories(${PROJECT_NAME} PUBLIC
@@ -31,7 +34,11 @@ target_include_directories(${PROJECT_NAME} PUBLIC
   $<INSTALL_INTERFACE:include>
 )
 ament_target_dependencies(${PROJECT_NAME}
-  rclcpp rclcpp_action simulation_interfaces tf2 pluginlib rviz_common  interactive_markers visualization_msgs
+    rclcpp
+    rclcpp_action
+    simulation_interfaces
+    pluginlib rviz_common  interactive_markers visualization_msgs
+    tf2 tf2_ros tf2_geometry_msgs
 )
 
 target_link_libraries(${PROJECT_NAME}
@@ -39,7 +46,7 @@ target_link_libraries(${PROJECT_NAME}
 )
 
 # Create standalone executable
-add_executable(${PROJECT_NAME}_standalone src/standalone_main.cpp)
+add_executable(${PROJECT_NAME}_standalone src/standalone_main.cpp src/simulation_widget.cpp  ${MOC_FILES})
 target_link_libraries(${PROJECT_NAME}_standalone ${PROJECT_NAME} Qt5::Widgets)
 ament_target_dependencies(${PROJECT_NAME}_standalone rclcpp)
 

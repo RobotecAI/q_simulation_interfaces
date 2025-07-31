@@ -1,11 +1,7 @@
 #include <QApplication>
-#include <QStyleFactory>
 #include <rclcpp/rclcpp.hpp>
 #include <QFile>
-#include <QTextStream>
-#include <QWidget>
-#include <QVBoxLayout>
-#include "q_simulation_interfaces/simulation_panel.hpp"
+#include "simulation_widget.hpp"
 
 class StandaloneWidget : public QWidget
 {
@@ -45,9 +41,9 @@ private:
 };
 
 int main(int argc, char *argv[]) {
+
     rclcpp::init(argc, argv);
     QApplication app(argc, argv);
-
     StandaloneWidget widget;
     widget.show();
 
