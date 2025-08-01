@@ -40,6 +40,7 @@ namespace Ui
 }
 namespace q_simulation_interfaces
 {
+    const char InteractiveMarkerNamespaceValue[] = "simulation_interfaces_panel";
     class SimulationWidget : public QWidget
     {
         Q_OBJECT
@@ -75,6 +76,8 @@ namespace q_simulation_interfaces
         void UpdateSpawnPointMarker();
 
         std::thread actionThread_;
+        std::atomic<bool> actionThreadRunning_{false}; //! Flag to control the action thread
+        std::atomic<float> actionThreadProgress_{0.0f}; //! Progress of the simulation step, used for UI updates
 
         Ui::simWidgetUi* ui_;
         rclcpp::Node::SharedPtr node_;
@@ -95,7 +98,6 @@ namespace q_simulation_interfaces
         // Vector to hold all service interfaces - this allows for easy management and iteration
         std::vector<std::shared_ptr<ServiceInterface>> serviceInterfaces_;
         QTimer* timer_; //! Timer for periodic updates
-
 
         std::shared_ptr<interactive_markers::InteractiveMarkerServer> interactiveMarkerServer_;
 

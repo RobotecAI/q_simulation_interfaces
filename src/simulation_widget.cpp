@@ -116,67 +116,59 @@ namespace q_simulation_interfaces
 
     void SimulationWidget::intiliaze(rclcpp::Node::SharedPtr node)
     {
-        if (!node)
-        {
-            node_ = rclcpp::Node::make_shared("qt_gui_node");
-        }
-        else
-        {
-            node_ = node;
-        }
-
+        node_ = node;
         // tf transform listener
-        tf_buffer_ = std::make_unique<tf2_ros::Buffer>(node_->get_clock());
+        tf_buffer_ = std::make_unique<tf2_ros::Buffer>(node->get_clock());
         tf_listener_ = std::make_unique<tf2_ros::TransformListener>(*tf_buffer_);
         // Initialize service objects
         getSpawnablesService_ =
-            std::make_shared<Service<simulation_interfaces::srv::GetSpawnables>>("/get_spawnables", node_);
+            std::make_shared<Service<simulation_interfaces::srv::GetSpawnables>>("/get_spawnables", node);
         serviceInterfaces_.push_back(getSpawnablesService_);
 
         spawnEntityService_ =
-            std::make_shared<Service<simulation_interfaces::srv::SpawnEntity>>("/spawn_entity", node_);
+            std::make_shared<Service<simulation_interfaces::srv::SpawnEntity>>("/spawn_entity", node);
         serviceInterfaces_.push_back(spawnEntityService_);
 
         getEntitiesService_ =
-            std::make_shared<Service<simulation_interfaces::srv::GetEntities>>("/get_entities", node_);
+            std::make_shared<Service<simulation_interfaces::srv::GetEntities>>("/get_entities", node);
         serviceInterfaces_.push_back(getEntitiesService_);
 
         getEntityStateService_ =
-            std::make_shared<Service<simulation_interfaces::srv::GetEntityState>>("/get_entity_state", node_);
+            std::make_shared<Service<simulation_interfaces::srv::GetEntityState>>("/get_entity_state", node);
         serviceInterfaces_.push_back(getEntityStateService_);
 
         setEntityStateService_ =
-            std::make_shared<Service<simulation_interfaces::srv::SetEntityState>>("/set_entity_state", node_);
+            std::make_shared<Service<simulation_interfaces::srv::SetEntityState>>("/set_entity_state", node);
         serviceInterfaces_.push_back(setEntityStateService_);
 
 
         deleteEntityService_ =
-            std::make_shared<Service<simulation_interfaces::srv::DeleteEntity>>("/delete_entity", node_);
+            std::make_shared<Service<simulation_interfaces::srv::DeleteEntity>>("/delete_entity", node);
         serviceInterfaces_.push_back(getEntityStateService_);
 
 
         getSimFeaturesService_ = std::make_shared<Service<simulation_interfaces::srv::GetSimulatorFeatures>>(
-            "/get_simulation_features", node_);
+            "/get_simulation_features", node);
         serviceInterfaces_.push_back(getSimFeaturesService_);
 
         resetSimulationService_ =
-            std::make_shared<Service<simulation_interfaces::srv::ResetSimulation>>("/reset_simulation", node_);
+            std::make_shared<Service<simulation_interfaces::srv::ResetSimulation>>("/reset_simulation", node);
         serviceInterfaces_.push_back(resetSimulationService_);
 
         getSimulationStateService_ =
-            std::make_shared<Service<simulation_interfaces::srv::GetSimulationState>>("/get_simulation_state", node_);
+            std::make_shared<Service<simulation_interfaces::srv::GetSimulationState>>("/get_simulation_state", node);
         serviceInterfaces_.push_back(getSimulationStateService_);
 
         setSimulationStateService_ =
-            std::make_shared<Service<simulation_interfaces::srv::SetSimulationState>>("/set_simulation_state", node_);
+            std::make_shared<Service<simulation_interfaces::srv::SetSimulationState>>("/set_simulation_state", node);
         serviceInterfaces_.push_back(setSimulationStateService_);
 
         stepSimulationService_ =
-            std::make_shared<Service<simulation_interfaces::srv::StepSimulation>>("/step_simulation", node_);
+            std::make_shared<Service<simulation_interfaces::srv::StepSimulation>>("/step_simulation", node);
         serviceInterfaces_.push_back(stepSimulationService_);
 
         interactiveMarkerServer_ =
-            std::make_shared<interactive_markers::InteractiveMarkerServer>("/simulation_interfaces_panel", node_);
+            std::make_shared<interactive_markers::InteractiveMarkerServer>(InteractiveMarkerNamespaceValue, node);
 
         // Create spawn point marker
         CreateSpawnPointMarker();
@@ -229,7 +221,8 @@ namespace q_simulation_interfaces
 
     void SimulationWidget::ActionThreadWorker(int steps)
     {
-        // create node
+        actionThreadRunning_.store(true);
+        // create node for action client
         auto node = rclcpp::Node::make_shared("qt_gui_action_node");
         using SimulateSteps = simulation_interfaces::action::SimulateSteps;
         auto client = rclcpp_action::create_client<SimulateSteps>(node, "/simulate_steps");
@@ -242,7 +235,7 @@ namespace q_simulation_interfaces
                    const std::shared_ptr<const SimulateSteps::Feedback> feedback)
         {
             float progress = static_cast<float>(feedback->completed_steps) / feedback->remaining_steps;
-            ui_->simProgressBar->setValue(static_cast<int>(progress * 100));
+            actionThreadProgress_.store(progress);
         };
         send_goal_options.goal_response_callback =
             [this](rclcpp_action::ClientGoalHandle<SimulateSteps>::SharedPtr goal_handle)
@@ -261,6 +254,7 @@ namespace q_simulation_interfaces
         {
             if (result.code == rclcpp_action::ResultCode::SUCCEEDED)
             {
+                actionThreadProgress_.store(1.0f);
                 RCLCPP_INFO(node_->get_logger(), "Simulation completed successfully");
             }
             else
@@ -272,6 +266,7 @@ namespace q_simulation_interfaces
         if (rclcpp::spin_until_future_complete(node, goal_handle) != rclcpp::FutureReturnCode::SUCCESS)
         {
             RCLCPP_ERROR(node->get_logger(), "Failed to call action");
+            actionThreadRunning_.store(false);
             return;
         }
         auto goal_handle_result = goal_handle.get();
@@ -279,19 +274,28 @@ namespace q_simulation_interfaces
         if (rclcpp::spin_until_future_complete(node, result_future) != rclcpp::FutureReturnCode::SUCCESS)
         {
             RCLCPP_ERROR(node->get_logger(), "Failed to get action result");
+            actionThreadRunning_.store(false);
             return;
         }
+        actionThreadRunning_.store(false);
     }
 
     void SimulationWidget::StepSimulation()
     {
         int steps = ui_->stepsSpinBox->value();
+        if (actionThreadRunning_.load() == true)
+        {
+            QMessageBox::warning(this, "Action in progress", "An action is already running. Please wait.");
+            return;
+        }
 
         if (actionThread_.joinable())
         {
             actionThread_.join();
         }
+        actionThreadRunning_.store(true);
         actionThread_ = std::thread(&SimulationWidget::ActionThreadWorker, this, steps);
+
     }
 
     void SimulationWidget::ResetSimulation()
@@ -573,6 +577,18 @@ namespace q_simulation_interfaces
 
     void SimulationWidget::UpdateServices()
     {
+
+        if (actionThreadRunning_)
+        {
+            ui_->stepSimButtonAction->setEnabled(false);
+            ui_->stepSimServiceButton->setEnabled(false);
+            ui_->simProgressBar->setValue(static_cast<int>(this->actionThreadProgress_ * 100));
+        }
+        else
+        {
+            ui_->stepSimButtonAction->setEnabled(true);
+            ui_->stepSimServiceButton->setEnabled(true);
+        }
         for (auto& service : serviceInterfaces_)
         {
             if (service)
