@@ -77,7 +77,7 @@ public:
     using ClientSharedPtr = typename Client::SharedPtr;
     using FutureAndRequestId = typename Client::FutureAndRequestId;
 
-    Service(const std::string &service_name, rclcpp::Node::SharedPtr node, double timeout = 0)
+    Service(const std::string &service_name, rclcpp::Node::SharedPtr node, double timeout = 1000)
             : client_(node->create_client<T>(service_name)),
               node_(node), timeout_(std::chrono::milliseconds(static_cast<int>(timeout))) {
     }
@@ -118,6 +118,7 @@ public:
                 return;
             }
         }
+
         if (service_result_->wait_for(std::chrono::seconds(0)) == std::future_status::ready)
         {
             auto response = service_result_->future.get();
@@ -129,6 +130,7 @@ public:
                 service_called_time_.reset();
             }
         }
+        RCLCPP_INFO(node_->get_logger(), "Service %s is still processing", client_->get_service_name());
     }
 
     Expected<Response> call_service_sync(const Request &request = Request(), bool silent = false) {

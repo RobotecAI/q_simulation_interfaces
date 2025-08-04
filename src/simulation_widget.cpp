@@ -166,7 +166,7 @@ namespace q_simulation_interfaces
         stepSimulationService_ =
             std::make_shared<Service<simulation_interfaces::srv::StepSimulation>>("/step_simulation", node);
         serviceInterfaces_.push_back(stepSimulationService_);
-
+        //
         interactiveMarkerServer_ =
             std::make_shared<interactive_markers::InteractiveMarkerServer>(InteractiveMarkerNamespaceValue, node);
 
@@ -454,7 +454,7 @@ namespace q_simulation_interfaces
                     interactive_marker.description = "Manipulate entity " + entity;
                     interactive_marker.pose.position = response->state.pose.position;
                     interactive_marker.pose.orientation = response->state.pose.orientation;
-                    interactive_marker.scale = 1.0;
+                    interactive_marker.scale = 0.2;
 
                     AddControlToInteractiveMarker(interactive_marker, true);
 
@@ -462,6 +462,7 @@ namespace q_simulation_interfaces
                         [this, entity](const auto& feedback)
                     {
                         const auto& pose = feedback->pose;
+
                         ui_->StatePosX->setValue(pose.position.x);
                         ui_->StatePosY->setValue(pose.position.y);
                         ui_->StatePosZ->setValue(pose.position.z);
@@ -473,11 +474,13 @@ namespace q_simulation_interfaces
                         const auto angle = q.getAngle();
                         ui_->RotVector->setText(VectorToQstring(axis));
                         ui_->RotAngle->setValue(angle);
-                        // Update the state in the UI
+                        ui_->frameStateLineEdit->setText(QString::fromStdString(feedback->header.frame_id));
 
                         simulation_interfaces::srv::SetEntityState::Request request;
                         request.entity = entity;
                         request.state.pose = pose;
+                        request.state.header.frame_id = feedback->header.frame_id;
+                        setEntityStateService_->call_service_async(nullptr,request);
                     };
                     interactiveMarkerServer_->insert(interactive_marker, feedbackCb);
                     interactiveMarkerServer_->applyChanges();
@@ -630,6 +633,7 @@ namespace q_simulation_interfaces
         cubeMarker.scale.y = 0.3;
         cubeMarker.scale.z = 0.3;
         cubeMarker.color.r = 0.0;
+        cubeMarker.color.r = 0.0;
         cubeMarker.color.g = 1.0;
         cubeMarker.color.b = 0.0;
         cubeMarker.color.a = 0.8;
@@ -642,25 +646,11 @@ namespace q_simulation_interfaces
         {
             if (feedback->event_type == visualization_msgs::msg::InteractiveMarkerFeedback::POSE_UPDATE)
             {
-                try
-                {
-                    const std::string panelFrameId = ui_->frameStateLineEdit->text().toStdString();
-
-                    geometry_msgs::msg::PoseStamped poseStamped;
-                    poseStamped.header.frame_id = panelFrameId;
-                    poseStamped.pose = feedback->pose;
-
-                    geometry_msgs::msg::PoseStamped poseInPanelFrame;
-                    tf_buffer_->transform(poseStamped, poseInPanelFrame, panelFrameId);
-
-                    ui_->doubleSpinBoxX->setValue(poseInPanelFrame.pose.position.x);
-                    ui_->doubleSpinBoxY->setValue(poseInPanelFrame.pose.position.y);
-                    ui_->doubleSpinBoxZ->setValue(poseInPanelFrame.pose.position.z);
-                }
-                catch (const tf2::TransformException& ex)
-                {
-                    RCLCPP_ERROR(node_->get_logger(), "Failed to transform pose: %s", ex.what());
-                }
+                    const auto& pose = feedback->pose;
+                    ui_->spawnFrameLineEdit->setText(QString::fromStdString(feedback->header.frame_id));
+                    ui_->doubleSpinBoxX->setValue(pose.position.x);
+                    ui_->doubleSpinBoxY->setValue(pose.position.y);
+                    ui_->doubleSpinBoxZ->setValue(pose.position.z);
             }
         };
 
@@ -686,12 +676,14 @@ namespace q_simulation_interfaces
 
         // Update position from GUI
         geometry_msgs::msg::Pose newPose;
+        std_msgs::msg::Header newHeader;
+        newHeader.frame_id = ui_->spawnFrameLineEdit->text().toStdString();
         newPose.position.x = ui_->doubleSpinBoxX->value();
         newPose.position.y = ui_->doubleSpinBoxY->value();
         newPose.position.z = ui_->doubleSpinBoxZ->value();
         newPose.orientation.w = 1.0;
 
-        interactiveMarkerServer_->setPose("spawn_point", newPose);
+        interactiveMarkerServer_->setPose("spawn_point", newPose, newHeader);
         interactiveMarkerServer_->applyChanges();
     }
 
