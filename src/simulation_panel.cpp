@@ -57,7 +57,7 @@ namespace q_simulation_interfaces
         {
             throw std::runtime_error("Failed to get ROS node abstraction");
         }
-        simulationWidget_->intiliaze(node_ptr_->get_raw_node());
+        simulationWidget_->initialize(node_ptr_->get_raw_node());
 
         auto context = this->getDisplayContext();
         auto display_group = context->getRootDisplayGroup();

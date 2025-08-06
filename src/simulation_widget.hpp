@@ -39,7 +39,7 @@ namespace q_simulation_interfaces
         ~SimulationWidget() override;
 
 
-        void intiliaze(rclcpp::Node::SharedPtr node = nullptr);
+        void initialize(rclcpp::Node::SharedPtr node = nullptr);
 
     private:
         void GetSpawnables();

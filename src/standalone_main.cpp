@@ -17,7 +17,7 @@ public:
         
         // Create a mock display context for the panel
         panel_ = new q_simulation_interfaces::SimulationWidget(this);
-        panel_->intiliaze(node_);
+        panel_->initialize(node_);
         layout->addWidget(panel_);
         node_thread_ = std::thread([this]() {
               rclcpp::spin(node_);

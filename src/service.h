@@ -160,7 +160,7 @@ public:
             service_result_.reset();
             service_called_time_.reset();
         }
-        RCLCPP_INFO(node_->get_logger(), "Service %s is still processing", client_->get_service_name());
+        RCLCPP_DEBUG(node_->get_logger(), "Service %s is still processing", client_->get_service_name());
     }
 
     //! Calls the service synchronously and checks the response.

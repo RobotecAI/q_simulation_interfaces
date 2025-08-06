@@ -38,7 +38,7 @@ namespace q_simulation_interfaces
             std::vector<geometry_msgs::msg::Quaternion> axesR;
             if (rotationZ)
             {
-                CreateQuaternion(1, 0, 1, 0); // z-axis
+                axesR.push_back(CreateQuaternion(1, 0, 1, 0)); // z-axis
             }
 
             for (const auto& axis : axesT)
@@ -114,7 +114,7 @@ namespace q_simulation_interfaces
         delete ui_;
     }
 
-    void SimulationWidget::intiliaze(rclcpp::Node::SharedPtr node)
+    void SimulationWidget::initialize(rclcpp::Node::SharedPtr node)
     {
         node_ = node;
         // tf transform listener
@@ -144,7 +144,7 @@ namespace q_simulation_interfaces
 
         deleteEntityService_ =
             std::make_shared<Service<simulation_interfaces::srv::DeleteEntity>>("/delete_entity", node);
-        serviceInterfaces_.push_back(getEntityStateService_);
+        serviceInterfaces_.push_back(deleteEntityService_);
 
 
         getSimFeaturesService_ = std::make_shared<Service<simulation_interfaces::srv::GetSimulatorFeatures>>(
@@ -539,7 +539,7 @@ namespace q_simulation_interfaces
         auto cb = [this](auto response)
         {
             ProduceWarningIfProblem(this, "SpawnEntity", response);
-            if (!response && response->result.result == simulation_interfaces::msg::Result::RESULT_OK)
+            if (response && response->result.result == simulation_interfaces::msg::Result::RESULT_OK)
             {
                 QString message = QString::asprintf("Spawned as %s", response->entity_name.c_str());
                 QMessageBox::information(this, "Success", message);
