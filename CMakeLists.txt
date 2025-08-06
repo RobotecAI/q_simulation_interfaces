@@ -62,8 +62,9 @@ install(TARGETS ${PROJECT_NAME}_standalone
 install(DIRECTORY include/
         DESTINATION include
 )
-install(FILES q_simulation_plugins.xml
-        DESTINATION share/${PROJECT_NAME}
+
+install(DIRECTORY icons/
+        DESTINATION share/${PROJECT_NAME}/icons/classes
 )
 
 ament_export_include_directories(include)

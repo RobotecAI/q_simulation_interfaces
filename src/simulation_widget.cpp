@@ -612,7 +612,7 @@ namespace q_simulation_interfaces
         spawnMarker.header.frame_id = ui_->spawnFrameLineEdit->text().toStdString();
         spawnMarker.name = "spawn_point";
         spawnMarker.description = "Spawn Point - Drag to set spawn location";
-        spawnMarker.scale = 1.0;
+        spawnMarker.scale = 0.1;
 
         // Set initial position from GUI
         spawnMarker.pose.position.x = ui_->doubleSpinBoxX->value();
@@ -627,18 +627,6 @@ namespace q_simulation_interfaces
         visualControl.always_visible = true;
         visualControl.interaction_mode = visualization_msgs::msg::InteractiveMarkerControl::NONE;
 
-        visualization_msgs::msg::Marker cubeMarker;
-        cubeMarker.type = visualization_msgs::msg::Marker::CUBE;
-        cubeMarker.scale.x = 0.3;
-        cubeMarker.scale.y = 0.3;
-        cubeMarker.scale.z = 0.3;
-        cubeMarker.color.r = 0.0;
-        cubeMarker.color.r = 0.0;
-        cubeMarker.color.g = 1.0;
-        cubeMarker.color.b = 0.0;
-        cubeMarker.color.a = 0.8;
-
-        visualControl.markers.push_back(cubeMarker);
         spawnMarker.controls.push_back(visualControl);
 
         // Set up feedback callback to update GUI when marker is moved
