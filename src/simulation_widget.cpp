@@ -148,7 +148,7 @@ namespace q_simulation_interfaces
 
 
         getSimFeaturesService_ = std::make_shared<Service<simulation_interfaces::srv::GetSimulatorFeatures>>(
-            "/get_simulation_features", node);
+            "/get_simulator_features", node);
         serviceInterfaces_.push_back(getSimFeaturesService_);
 
         resetSimulationService_ =
@@ -589,13 +589,13 @@ namespace q_simulation_interfaces
         {
             ui_->stepSimButtonAction->setEnabled(false);
             ui_->stepSimServiceButton->setEnabled(false);
-            ui_->simProgressBar->setValue(static_cast<int>(this->actionThreadProgress_ * 100));
         }
         else
         {
             ui_->stepSimButtonAction->setEnabled(true);
             ui_->stepSimServiceButton->setEnabled(true);
         }
+        ui_->simProgressBar->setValue(static_cast<int>(this->actionThreadProgress_ * 100));
         for (auto& service : serviceInterfaces_)
         {
             if (service)
