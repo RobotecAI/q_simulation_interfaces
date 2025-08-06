@@ -57,9 +57,10 @@ namespace q_simulation_interfaces
         {
             throw std::runtime_error("Failed to get ROS node abstraction");
         }
+        auto context = this->getDisplayContext();
+        simulationWidget_->SetFixedFrame(context->getFixedFrame());
         simulationWidget_->initialize(node_ptr_->get_raw_node());
 
-        auto context = this->getDisplayContext();
         auto display_group = context->getRootDisplayGroup();
         assert(display_group);
 
@@ -93,7 +94,7 @@ namespace q_simulation_interfaces
             im_display_->setEnabled(true);
             im_display_->setShouldBeSaved(false);
             im_display_->setName("Simulation Interactive Markers");
-            auto property = im_display_->findProperty("Interactive Markers Namespace");
+            auto property = im_display_->findProperty(InteractiveMarkerNamespacePropertyName);
             assert(property);
             property->setValue(QString::fromStdString(InteractiveMarkerNamespaceValue));
             display_group->addDisplay(im_display_);
@@ -102,7 +103,6 @@ namespace q_simulation_interfaces
 
     void SimulationPanel::hideEvent(QHideEvent* event)
     {
-        std::cout << "HideEvent" << std::endl;
         if (im_display_)
         {
             im_display_ = nullptr;

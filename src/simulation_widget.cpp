@@ -67,8 +67,8 @@ namespace q_simulation_interfaces
     {
         std::cout << "Simulation widget created" << std::endl;
         ui_->setupUi(this);
-        ui_->frameStateLineEdit->setText("map");
-        ui_->spawnFrameLineEdit->setText("map");
+        ui_->frameStateLineEdit->setText("panda_link0");
+        ui_->spawnFrameLineEdit->setText("panda_link0");
         for (const auto& [name, _] : ScopeNameToId)
         {
             ui_->resetModeCombo->addItem(QString::fromStdString(name));
@@ -113,6 +113,7 @@ namespace q_simulation_interfaces
         }
         delete ui_;
     }
+
 
     void SimulationWidget::initialize(rclcpp::Node::SharedPtr node)
     {
@@ -173,6 +174,27 @@ namespace q_simulation_interfaces
         // Create spawn point marker
         CreateSpawnPointMarker();
     }
+
+    void SimulationWidget::hideEvent(QHideEvent* event)
+    {
+        RCLCPP_INFO(node_->get_logger(), "hideEvent");
+        if (interactiveMarkerServer_)
+        {
+            interactiveMarkerServer_->clear();
+            interactiveMarkerServer_->applyChanges();
+        }
+
+    }
+    void SimulationWidget::showEvent(QShowEvent* event)
+    {
+        RCLCPP_INFO(node_->get_logger(), "showEvent");
+        if (interactiveMarkerServer_)
+        {
+            CreateSpawnPointMarker();
+            UpdateSpawnPointMarker(); // Ensure the marker is updated when shown
+        }
+    }
+
 
     void SimulationWidget::GetSimulationState()
     {
@@ -636,33 +658,24 @@ namespace q_simulation_interfaces
         // Set up feedback callback to update GUI when marker is moved
         interactive_markers::InteractiveMarkerServer::FeedbackCallback feedbackCb = [this](const auto& feedback)
         {
-            if (feedback->event_type == visualization_msgs::msg::InteractiveMarkerFeedback::POSE_UPDATE)
+            if (feedback && feedback->event_type == visualization_msgs::msg::InteractiveMarkerFeedback::POSE_UPDATE && ui_)
             {
-                    const auto& pose = feedback->pose;
-                    ui_->spawnFrameLineEdit->setText(QString::fromStdString(feedback->header.frame_id));
-                    ui_->doubleSpinBoxX->setValue(pose.position.x);
-                    ui_->doubleSpinBoxY->setValue(pose.position.y);
-                    ui_->doubleSpinBoxZ->setValue(pose.position.z);
+                assert(ui_);
+                const auto& pose = feedback->pose;
+                ui_->spawnFrameLineEdit->setText(QString::fromStdString(feedback->header.frame_id));
+                ui_->doubleSpinBoxX->setValue(pose.position.x);
+                ui_->doubleSpinBoxY->setValue(pose.position.y);
+                ui_->doubleSpinBoxZ->setValue(pose.position.z);
             }
         };
 
         interactiveMarkerServer_->insert(spawnMarker, feedbackCb);
-        interactiveMarkerServer_->applyChanges();
     }
 
     void SimulationWidget::UpdateSpawnPointMarker()
     {
         if (!interactiveMarkerServer_)
         {
-            return;
-        }
-
-        // Get current marker
-        visualization_msgs::msg::InteractiveMarker spawnMarker;
-        if (!interactiveMarkerServer_->get("spawn_point", spawnMarker))
-        {
-            // Marker doesn't exist, create it
-            CreateSpawnPointMarker();
             return;
         }
 
@@ -677,6 +690,11 @@ namespace q_simulation_interfaces
 
         interactiveMarkerServer_->setPose("spawn_point", newPose, newHeader);
         interactiveMarkerServer_->applyChanges();
+    }
+    void SimulationWidget::SetFixedFrame(const QString& frame_id)
+    {
+        ui_->spawnFrameLineEdit->setText(frame_id);
+        ui_->frameStateLineEdit->setText(frame_id);
     }
 
 } // namespace q_simulation_interfaces

@@ -38,10 +38,14 @@ namespace q_simulation_interfaces
         explicit SimulationWidget(QWidget* parent = nullptr);
         ~SimulationWidget() override;
 
-
+        void SetFixedFrame(const QString& frame_id);
         void initialize(rclcpp::Node::SharedPtr node = nullptr);
 
     private:
+        // QWidget interface
+        void hideEvent(QHideEvent* event) override;
+        void showEvent(QShowEvent* event) override;
+
         void GetSpawnables();
         void SpawnButton();
         void GetAllEntities();
