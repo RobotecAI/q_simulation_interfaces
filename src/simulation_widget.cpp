@@ -393,7 +393,11 @@ namespace q_simulation_interfaces
             if (response && response->result.result == simulation_interfaces::msg::Result::RESULT_OK)
             {
                 ui_->ComboEntities->clear();
-                for (const auto& entity : response->entities)
+
+                auto entities = response->entities;
+                std::sort(entities.begin(), entities.end());
+
+                for (const auto& entity : entities)
                 {
                     ui_->ComboEntities->addItem(QString(entity.c_str()));
                 }
