@@ -36,8 +36,6 @@ private:
     q_simulation_interfaces::SimulationWidget *panel_;
     rclcpp::Node::SharedPtr node_;
     std::thread node_thread_;
-
-
 };
 
 int main(int argc, char *argv[]) {

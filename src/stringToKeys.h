@@ -3,7 +3,7 @@
 #include <unordered_map>
 #include <string>
 
-const std::map<int, std::string> FeatureToName
+const std::unordered_map<int, std::string> FeatureToName
         {
                 {0,  "SPAWNING"},
                 {1,  "DELETING"},
@@ -31,7 +31,7 @@ const std::map<int, std::string> FeatureToName
                 {32, "STEP_SIMULATION_MULTIPLE"},
                 {33, "STEP_SIMULATION_ACTION"},
         };
-const std::map<int, std::string> FeatureDescription
+const std::unordered_map<int, std::string> FeatureDescription
         {
                 {0,  "Supports spawn interface (SpawnEntity)."},
                 {1,  "Supports deleting entities (DeleteEntity)."},
@@ -59,7 +59,7 @@ const std::map<int, std::string> FeatureDescription
                 {32, "Supports multi-stepping through simulation, either through StepSimulation service or StepSimulation action."},
                 {33, "Supports SimulateSteps action interface."},
         };
-const std::map<std::string, int> ScopeNameToId
+const std::unordered_map<std::string, int> ScopeNameToId
         {
                 {"SCOPE_DEFAULT", 0},
                 {"SCOPE_TIME",    1},
@@ -68,14 +68,14 @@ const std::map<std::string, int> ScopeNameToId
                 {"SCOPE_ALL",     255},
         };
 
-const std::map<int, std::string> ErrorIdToName
+const std::unordered_map<int, std::string> ErrorIdToName
         {
                 {0, "RESULT_FEATURE_UNSUPPORTED"},
                 {2, "RESULT_NOT_FOUND"},
                 {3, "RESULT_INCORRECT_STATE"},
                 {4, "RESULT_OPERATION_FAILED"},
         };
-const std::map<int, std::string> SimStateIdToName
+const std::unordered_map<int, std::string> SimStateIdToName
         {
                 {0, "STATE_STOPPED"},
                 {1, "STATE_PLAYING"},
@@ -84,7 +84,7 @@ const std::map<int, std::string> SimStateIdToName
         };
 
 
-const std::map<std::string, int> SimStateNameToId
+const std::unordered_map<std::string, int> SimStateNameToId
         {
                 {"STATE_STOPPED",  0},
                 {"STATE_PLAYING",  1},

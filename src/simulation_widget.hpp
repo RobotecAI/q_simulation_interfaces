@@ -11,28 +11,17 @@
 #include <thread>
 #include <tf2_ros/buffer.h>
 #include <tf2_ros/transform_listener.h>
-#include <geometry_msgs/msg/transform_stamped.hpp>
 
-// Forward declarations for service types
-template <typename T>
-class Service;
-namespace simulation_interfaces
-{
-    namespace srv
-    {
-        class GetSpawnables;
-        class SpawnEntity;
-        class GetEntities;
-        class GetEntityState;
-        class SetEntityState;
-        class DeleteEntity;
-        class GetSimulatorFeatures;
-        class ResetSimulation;
-        class GetSimulationState;
-        class SetSimulationState;
-        class StepSimulation;
-    } // namespace srv
-} // namespace simulation_interfaces
+
+#include <simulation_interfaces/srv/spawn_entity.hpp>
+#include <simulation_interfaces/srv/get_entities.hpp>
+#include <simulation_interfaces/srv/get_entity_state.hpp>
+#include <simulation_interfaces/srv/set_entity_state.hpp>
+#include <simulation_interfaces/srv/delete_entity.hpp>
+#include <simulation_interfaces/srv/reset_simulation.hpp>
+#include <simulation_interfaces/srv/get_simulation_state.hpp>
+#include <simulation_interfaces/srv/set_simulation_state.hpp>
+#include <simulation_interfaces/srv/step_simulation.hpp>
 
 namespace Ui
 {
@@ -66,6 +55,7 @@ namespace q_simulation_interfaces
         void SetSimulationState();
         void StepSimulationService();
 
+        //! The thread with own ROS 2 node that will run the action client
         void ActionThreadWorker(int steps);
 
         //! Called periodically to update the state of the services
@@ -95,7 +85,7 @@ namespace q_simulation_interfaces
         std::shared_ptr<Service<simulation_interfaces::srv::SetSimulationState>> setSimulationStateService_;
         std::shared_ptr<Service<simulation_interfaces::srv::StepSimulation>> stepSimulationService_;
 
-        // Vector to hold all service interfaces - this allows for easy management and iteration
+        // Vector to hold all service interfaces of created services
         std::vector<std::shared_ptr<ServiceInterface>> serviceInterfaces_;
         QTimer* timer_; //! Timer for periodic updates
 
