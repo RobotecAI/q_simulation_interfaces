@@ -69,11 +69,12 @@ namespace q_simulation_interfaces
         ui_->setupUi(this);
         ui_->frameStateLineEdit->setText("panda_link0");
         ui_->spawnFrameLineEdit->setText("panda_link0");
+
         for (const auto& [name, _] : ScopeNameToId)
         {
             ui_->resetModeCombo->addItem(QString::fromStdString(name));
         }
-        for (const auto& [name, _] : SimStateNameToId)
+        for (const auto& [_, name] : SimStateIdToName)
         {
             ui_->simStateToSetComboBox->addItem(QString::fromStdString(name));
         }
