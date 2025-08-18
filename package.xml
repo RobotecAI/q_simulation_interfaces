@@ -2,10 +2,10 @@
 <package format="3">
   <name>q_simulation_interfaces</name>
   <version>0.0.1</version>
-  <description>Foo</description>
+  <description>Simulation interface gui</description>
 
-  <maintainer email="michalpelka@gmail.com">Your Name</maintainer>
-  <license>MIT</license>
+  <maintainer email="michal.pelka@robotec.ai">Michał Pełka</maintainer>
+  <license>Apache License 2.0</license>
 
   <buildtool_depend>ament_cmake</buildtool_depend>
   <depend>rclcpp</depend>
