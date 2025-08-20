@@ -1,20 +1,18 @@
 #pragma once
-#include <simulation_interfaces/srv/get_spawnables.hpp>
-#include <simulation_interfaces/srv/get_simulator_features.hpp>
-#include <simulation_interfaces/msg/result.hpp>
+#include <QMessageBox>
 #include <rclcpp/rclcpp.hpp>
 #include <rclcpp_action/rclcpp_action.hpp>
+#include <simulation_interfaces/msg/result.hpp>
+#include <simulation_interfaces/srv/get_simulator_features.hpp>
+#include <string>
 #include <type_traits>
 #include <variant>
-#include <string>
-#include <QMessageBox>
-#include "stringToKeys.h"
+#include "string_to_keys.h"
 
 //! Simple expected-like class, where T is the expected type and error is a string.
 //! This class is used to handle service responses and errors in a more structured way.
 template<typename T>
 class Expected {
-private:
     std::optional<T> value_;
     std::string error_;
 

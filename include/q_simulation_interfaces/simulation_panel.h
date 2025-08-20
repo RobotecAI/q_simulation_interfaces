@@ -11,12 +11,13 @@ namespace q_simulation_interfaces
     class SimulationWidget;
     class SimulationPanel : public rviz_common::Panel
     {
+        Q_OBJECT
     public:
         explicit SimulationPanel(QWidget* parent = nullptr);
 
         ~SimulationPanel() override;
         void onInitialize() override;
-        QString getName() const;
+        QString getName() const override;
         void hideEvent(QHideEvent* event) override;
 
     private:

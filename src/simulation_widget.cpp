@@ -1,12 +1,13 @@
-#include "simulation_widget.hpp"
+#include "simulation_widget.h"
 #include <QMessageBox>
 #include <QTimer>
+#include <QtMath>
 #include <rclcpp_action/create_client.hpp>
 #include <rviz_common/display_context.hpp>
 #include <simulation_interfaces/action/simulate_steps.hpp>
 #include <tf2/LinearMath/Quaternion.h>
 #include "service.h"
-#include "stringToKeys.h"
+#include "string_to_keys.h"
 #include "ui_sim_widget.h"
 #include "vector_utils.hpp"
 
@@ -65,10 +66,9 @@ namespace q_simulation_interfaces
 
     SimulationWidget::SimulationWidget(QWidget* parent) : QWidget(parent), ui_(new Ui::simWidgetUi)
     {
-        std::cout << "Simulation widget created" << std::endl;
         ui_->setupUi(this);
-        ui_->frameStateLineEdit->setText("panda_link0");
-        ui_->spawnFrameLineEdit->setText("panda_link0");
+        ui_->frameStateLineEdit->setText("world");
+        ui_->spawnFrameLineEdit->setText("world");
 
         for (const auto& [name, _] : ScopeNameToId)
         {
@@ -254,10 +254,10 @@ namespace q_simulation_interfaces
         auto goal = std::make_shared<SimulateSteps::Goal>();
         goal->steps = steps;
         send_goal_options.feedback_callback =
-            [this](rclcpp_action::ClientGoalHandle<SimulateSteps>::SharedPtr goal_handle,
+            [this, steps](rclcpp_action::ClientGoalHandle<SimulateSteps>::SharedPtr goal_handle,
                    const std::shared_ptr<const SimulateSteps::Feedback> feedback)
         {
-            float progress = static_cast<float>(feedback->completed_steps) / feedback->remaining_steps;
+            float progress = static_cast<float>(feedback->completed_steps) / steps;
             actionThreadProgress_.store(progress);
         };
         send_goal_options.goal_response_callback =
@@ -498,7 +498,7 @@ namespace q_simulation_interfaces
                                                             pose.orientation.w);
 
                         const auto axis = q.getAxis();
-                        const auto angle = q.getAngle();
+                        const auto angle = qRadiansToDegrees(q.getAngle());
                         ui_->RotVector->setText(VectorToQstring(axis));
                         ui_->RotAngle->setValue(angle);
                         ui_->frameStateLineEdit->setText(QString::fromStdString(feedback->header.frame_id));
@@ -526,7 +526,7 @@ namespace q_simulation_interfaces
         request.state.pose.position.z = ui_->StatePosZ->value();
 
         const QString vectorStr = ui_->RotVector->text();
-        const double angle = ui_->RotAngle->value();
+        const double angle = qDegreesToRadians(ui_->RotAngle->value());
         const auto vector = QStringToVector(vectorStr);
         tf2::Quaternion q(vector, angle);
         request.state.header.frame_id = ui_->frameStateLineEdit->text().toStdString();

@@ -6,7 +6,7 @@ SET(CMAKE_AUTOUIC ON)
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(Qt5 REQUIRED COMPONENTS Widgets)
-find_package(simulation_interfaces REQUIRED)
+find_package(simulation_interfaces 1 REQUIRED)
 find_package(rclcpp_action REQUIRED)
 find_package(tf2 REQUIRED)
 find_package(pluginlib REQUIRED)
@@ -23,7 +23,7 @@ set(CMAKE_CXX_STANDARD 17)
 # Add UI file
 
 qt5_wrap_cpp(MOC_FILES
-        include/q_simulation_interfaces/simulation_panel.hpp
+        include/q_simulation_interfaces/simulation_panel.h
 )
 
 set(SOURCES src/simulation_widget.cpp src/simulation_panel.cpp)
@@ -46,7 +46,7 @@ target_link_libraries(${PROJECT_NAME}
 )
 
 # Create standalone executable
-add_executable(${PROJECT_NAME}_standalone src/standalone_main.cpp src/simulation_widget.cpp  ${MOC_FILES})
+add_executable(${PROJECT_NAME}_standalone src/standalone_main.cpp src/simulation_widget.cpp ${MOC_FILES})
 target_link_libraries(${PROJECT_NAME}_standalone ${PROJECT_NAME} Qt5::Widgets)
 ament_target_dependencies(${PROJECT_NAME}_standalone rclcpp)
 

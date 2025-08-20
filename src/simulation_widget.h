@@ -12,7 +12,7 @@
 #include <tf2_ros/buffer.h>
 #include <tf2_ros/transform_listener.h>
 
-
+#include <simulation_interfaces/srv/get_spawnables.hpp>
 #include <simulation_interfaces/srv/spawn_entity.hpp>
 #include <simulation_interfaces/srv/get_entities.hpp>
 #include <simulation_interfaces/srv/get_entity_state.hpp>

@@ -1,8 +1,8 @@
-#include <q_simulation_interfaces/simulation_panel.hpp>
 #include <QVBoxLayout>
-#include "simulation_widget.hpp"
-#include <rviz_common/panel.hpp>
+#include <q_simulation_interfaces/simulation_panel.h>
 #include <rviz_common/display_group.hpp>
+#include <rviz_common/panel.hpp>
+#include "simulation_widget.h"
 namespace q_simulation_interfaces
 {
     namespace
