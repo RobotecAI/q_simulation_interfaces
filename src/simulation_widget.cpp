@@ -11,9 +11,9 @@
 #include "ui_sim_widget.h"
 #include "vector_utils.hpp"
 
+#include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 #include <visualization_msgs/msg/interactive_marker.hpp>
 #include <visualization_msgs/msg/interactive_marker_control.hpp>
-#include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 namespace q_simulation_interfaces
 {
     namespace
@@ -28,7 +28,8 @@ namespace q_simulation_interfaces
             return q;
         }
 
-        void AddControlToInteractiveMarker(visualization_msgs::msg::InteractiveMarker& interactive_marker, bool rotationZ)
+        void AddControlToInteractiveMarker(visualization_msgs::msg::InteractiveMarker& interactive_marker,
+                                           bool rotationZ)
         {
             // move axis x
             const std::vector<geometry_msgs::msg::Quaternion> axesT = {
@@ -127,12 +128,10 @@ namespace q_simulation_interfaces
             std::make_shared<Service<simulation_interfaces::srv::GetSpawnables>>("/get_spawnables", node);
         serviceInterfaces_.push_back(getSpawnablesService_);
 
-        spawnEntityService_ =
-            std::make_shared<Service<simulation_interfaces::srv::SpawnEntity>>("/spawn_entity", node);
+        spawnEntityService_ = std::make_shared<Service<simulation_interfaces::srv::SpawnEntity>>("/spawn_entity", node);
         serviceInterfaces_.push_back(spawnEntityService_);
 
-        getEntitiesService_ =
-            std::make_shared<Service<simulation_interfaces::srv::GetEntities>>("/get_entities", node);
+        getEntitiesService_ = std::make_shared<Service<simulation_interfaces::srv::GetEntities>>("/get_entities", node);
         serviceInterfaces_.push_back(getEntitiesService_);
 
         getEntityStateService_ =
@@ -184,7 +183,6 @@ namespace q_simulation_interfaces
             interactiveMarkerServer_->clear();
             interactiveMarkerServer_->applyChanges();
         }
-
     }
     void SimulationWidget::showEvent(QShowEvent* event)
     {
@@ -255,7 +253,7 @@ namespace q_simulation_interfaces
         goal->steps = steps;
         send_goal_options.feedback_callback =
             [this, steps](rclcpp_action::ClientGoalHandle<SimulateSteps>::SharedPtr goal_handle,
-                   const std::shared_ptr<const SimulateSteps::Feedback> feedback)
+                          const std::shared_ptr<const SimulateSteps::Feedback> feedback)
         {
             float progress = static_cast<float>(feedback->completed_steps) / steps;
             actionThreadProgress_.store(progress);
@@ -318,7 +316,6 @@ namespace q_simulation_interfaces
         }
         actionThreadRunning_.store(true);
         actionThread_ = std::thread(&SimulationWidget::ActionThreadWorker, this, steps);
-
     }
 
     void SimulationWidget::ResetSimulation()
@@ -507,7 +504,7 @@ namespace q_simulation_interfaces
                         request.entity = entity;
                         request.state.pose = pose;
                         request.state.header.frame_id = feedback->header.frame_id;
-                        setEntityStateService_->call_service_async(nullptr,request);
+                        setEntityStateService_->call_service_async(nullptr, request);
                     };
                     interactiveMarkerServer_->insert(interactive_marker, feedbackCb);
                     interactiveMarkerServer_->applyChanges();
@@ -659,7 +656,8 @@ namespace q_simulation_interfaces
         // Set up feedback callback to update GUI when marker is moved
         interactive_markers::InteractiveMarkerServer::FeedbackCallback feedbackCb = [this](const auto& feedback)
         {
-            if (feedback && feedback->event_type == visualization_msgs::msg::InteractiveMarkerFeedback::POSE_UPDATE && ui_)
+            if (feedback && feedback->event_type == visualization_msgs::msg::InteractiveMarkerFeedback::POSE_UPDATE &&
+                ui_)
             {
                 assert(ui_);
                 const auto& pose = feedback->pose;

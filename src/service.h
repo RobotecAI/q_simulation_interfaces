@@ -11,8 +11,9 @@
 
 //! Simple expected-like class, where T is the expected type and error is a string.
 //! This class is used to handle service responses and errors in a more structured way.
-template<typename T>
-class Expected {
+template <typename T>
+class Expected
+{
     std::optional<T> value_;
     std::string error_;
 
@@ -31,13 +32,25 @@ public:
     operator bool() const { return has_value(); }
 
     //! Returns the value. Does not check if the value exists.
-    const T& operator*() const { assert(value_.has_value()); return *value_; }
+    const T& operator*() const
+    {
+        assert(value_.has_value());
+        return *value_;
+    }
 
     //! Returns the value. Does not check if the value exists.
-    const T* operator->() const { assert(value_.has_value()); return &(*value_); }
+    const T* operator->() const
+    {
+        assert(value_.has_value());
+        return &(*value_);
+    }
 
     //! Returns the error message if it exists, otherwise returns an empty string.
-    const std::string& error() const { assert(!value_.has_value()); return error_; }
+    const std::string& error() const
+    {
+        assert(!value_.has_value());
+        return error_;
+    }
 };
 
 //! Produces a QT warning message box if the response has an error or if the result is not OK.
@@ -45,27 +58,31 @@ public:
 //! @param operation - the operation that was performed, used in the error message
 //! @param response - the response from the service call, which can be an Expected<T>
 //! @tparam T - the service response type (e.g., simulation_interfaces::srv::GetSimulatorFeatures::Response)
-template<typename T>
-void ProduceWarningIfProblem(QWidget* parent, const QString operation, const Expected<T>& response) {
-    if (!response.has_value()) {
+template <typename T>
+void ProduceWarningIfProblem(QWidget* parent, const QString operation, const Expected<T>& response)
+{
+    if (!response.has_value())
+    {
         auto w = QString("Failed to %1: %2").arg(operation, QString::fromStdString(response.error()));
         QMessageBox::warning(parent, "Error", w);
         return;
     }
 
     // only GetSimulatorFeatures::Response does not have a result field, so check if T is not that type
-    if constexpr (!std::is_same_v<T, simulation_interfaces::srv::GetSimulatorFeatures::Response>) {
-      if (response->result.result != simulation_interfaces::msg::Result::RESULT_OK) {
-        auto w = QString("Operation %1 failed: %2")
-            .arg(operation, QString::fromStdString(response->result.error_message));
-        QMessageBox::warning(parent, "Error", w);
-      }
+    if constexpr (!std::is_same_v<T, simulation_interfaces::srv::GetSimulatorFeatures::Response>)
+    {
+        if (response->result.result != simulation_interfaces::msg::Result::RESULT_OK)
+        {
+            auto w = QString("Operation %1 failed: %2")
+                         .arg(operation, QString::fromStdString(response->result.error_message));
+            QMessageBox::warning(parent, "Error", w);
+        }
     }
-
 }
 
 //! Interface for checking service results.
-class ServiceInterface  {
+class ServiceInterface
+{
 public:
     //! Pokes the service to check if the result is ready.
     //! This method should be called periodically to check if the service call has completed.
@@ -75,8 +92,9 @@ public:
 //! Template class for a service client that can call a service asynchronously or synchronously.
 //! It uses the ROS 2 rclcpp client to send requests and receive responses.
 //! @tparam T - the service type, which must be a ROS 2 service type
-template<typename T>
-class Service : public ServiceInterface {
+template <typename T>
+class Service : public ServiceInterface
+{
 public:
     using Request = typename T::Request;
     using Response = typename T::Response;
@@ -88,16 +106,18 @@ public:
     using FutureAndRequestId = typename Client::FutureAndRequestId;
 
     //! Callback type for the service call completion.
-    //! It gives back to the caller an Expected<Response> object, which can either contain the response or an error message.
+    //! It gives back to the caller an Expected<Response> object, which can either contain the response or an error
+    //! message.
     using CompletionCallback = std::function<void(Expected<Response>)>;
 
     //! Constructor for the Service class.
     //! @param service_name - the name of the service to call
     //! @param node - the ROS 2 node to use for creating the client
     //! @param timeout - the timeout for the service call in milliseconds, default is 1000 ms
-    Service(const std::string &service_name, rclcpp::Node::SharedPtr node, double timeout = 1000)
-            : client_(node->create_client<T>(service_name)),
-              node_(node), timeout_(std::chrono::milliseconds(static_cast<int>(timeout))) {
+    Service(const std::string& service_name, rclcpp::Node::SharedPtr node, double timeout = 1000) :
+        client_(node->create_client<T>(service_name)), node_(node),
+        timeout_(std::chrono::milliseconds(static_cast<int>(timeout)))
+    {
     }
 
     virtual ~Service() = default;
@@ -126,14 +146,18 @@ public:
 
     //! Checks the service result and calls the callback if the result is ready.
     //! This method should be called periodically to check if the service call has completed.
-    void check_service_result() override {
-        if (!service_result_) {
-          return;
+    void check_service_result() override
+    {
+        if (!service_result_)
+        {
+            return;
         }
         // check duration
-        if (timeout_.count() > 0 && service_called_time_) {
+        if (timeout_.count() > 0 && service_called_time_)
+        {
             auto duration = std::chrono::system_clock::now() - *service_called_time_;
-            if (duration > timeout_) {
+            if (duration > timeout_)
+            {
                 RCLCPP_ERROR(node_->get_logger(), "Service call timed out");
                 if (callback_)
                 {
@@ -164,15 +188,19 @@ public:
     //! Calls the service synchronously and checks the response.
     //! @note, this method need to be called against ROS 2 node that can be spun.
     //! @param request - the request to send, default is an empty request
-    Expected<Response> call_service_sync(const Request &request = Request(), bool silent = false) {
-        if (!client_->wait_for_service( timeout_)) {
+    Expected<Response> call_service_sync(const Request& request = Request(), bool silent = false)
+    {
+        if (!client_->wait_for_service(timeout_))
+        {
             RCLCPP_ERROR(node_->get_logger(), "Service not available after waiting");
             return Expected<Response>{"Service not available after waiting"};
         }
-        if constexpr (std::is_same<simulation_interfaces::srv::GetSimulatorFeatures,T>() )
+        if constexpr (std::is_same<simulation_interfaces::srv::GetSimulatorFeatures, T>())
         {
             return call_service_sync_NoCheck(request);
-        } else {
+        }
+        else
+        {
             if (silent)
             {
                 return call_service_sync_NoCheck(request);
@@ -180,25 +208,31 @@ public:
             return call_service_sync_Check(request);
         }
     }
+
 private:
-    Expected<Response> call_service_sync_Check(const Request &request){
-        std::shared_ptr <Request> req = std::make_shared<Request>(request);
+    Expected<Response> call_service_sync_Check(const Request& request)
+    {
+        std::shared_ptr<Request> req = std::make_shared<Request>(request);
         auto future = client_->async_send_request(req);
-        if (rclcpp::spin_until_future_complete(node_, future, timeout_) !=
-            rclcpp::FutureReturnCode::SUCCESS) {
+        if (rclcpp::spin_until_future_complete(node_, future, timeout_) != rclcpp::FutureReturnCode::SUCCESS)
+        {
             RCLCPP_ERROR(node_->get_logger(), "Failed to call service");
             return Expected<Response>{"Failed to call service"};
         }
         auto response = future.get();
-        if (response->result.result != simulation_interfaces::msg::Result::RESULT_OK) {
+        if (response->result.result != simulation_interfaces::msg::Result::RESULT_OK)
+        {
             RCLCPP_ERROR(node_->get_logger(), "Service call failed: %s", response->result.error_message.c_str());
 
             const auto error_code = static_cast<int>(response->result.result);
             QString errorType;
-            if (auto it = ErrorIdToName.find(error_code); it != ErrorIdToName.end()) {
+            if (auto it = ErrorIdToName.find(error_code); it != ErrorIdToName.end())
+            {
                 errorType = QString::fromStdString(it->second);
-            } else {
-                errorType = "Error : " + QString::number(error_code) ;
+            }
+            else
+            {
+                errorType = "Error : " + QString::number(error_code);
             }
 
             QMessageBox::warning(nullptr, errorType, QString::fromStdString(response->result.error_message));
@@ -207,11 +241,12 @@ private:
         return Expected<Response>{*response};
     }
 
-    Expected<Response> call_service_sync_NoCheck(const Request &request = Request() ) {
-        std::shared_ptr <Request> req = std::make_shared<Request>(request);
+    Expected<Response> call_service_sync_NoCheck(const Request& request = Request())
+    {
+        std::shared_ptr<Request> req = std::make_shared<Request>(request);
         auto future = client_->async_send_request(req);
-        if (rclcpp::spin_until_future_complete(node_, future, timeout_) !=
-            rclcpp::FutureReturnCode::SUCCESS) {
+        if (rclcpp::spin_until_future_complete(node_, future, timeout_) != rclcpp::FutureReturnCode::SUCCESS)
+        {
             RCLCPP_ERROR(node_->get_logger(), "Failed to call service");
             return Expected<Response>{"Failed to call service"};
         }

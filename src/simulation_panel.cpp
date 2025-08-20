@@ -9,7 +9,7 @@ namespace q_simulation_interfaces
     {
         constexpr char InteractiveMarkerClassId[] = "rviz_default_plugins/InteractiveMarkers";
         constexpr char InteractiveMarkerNamespacePropertyName[] = "Interactive Markers Namespace";
-    }
+    } // namespace
     SimulationPanel::SimulationPanel(QWidget* parent)
     {
         simulationWidget_ = new SimulationWidget(this);
@@ -18,14 +18,10 @@ namespace q_simulation_interfaces
         setLayout(layout);
     }
 
-    SimulationPanel::~SimulationPanel()
-    {
-
-        delete simulationWidget_;
-    }
+    SimulationPanel::~SimulationPanel() { delete simulationWidget_; }
 
     //! Recursively iterate through all displays in a display group and apply a function to each display.
-    void iterateAllDisplays(rviz_common::DisplayGroup *group, std::function<bool (rviz_common::Display*)> func)
+    void iterateAllDisplays(rviz_common::DisplayGroup* group, std::function<bool(rviz_common::Display*)> func)
     {
         for (int i = 0; i < group->numChildren(); ++i)
         {
@@ -36,7 +32,6 @@ namespace q_simulation_interfaces
                 {
                     return; // stop iterating if the function returns true
                 }
-
             }
         }
         for (int i = 0; i < group->numChildren(); ++i)
@@ -47,7 +42,6 @@ namespace q_simulation_interfaces
                 iterateAllDisplays(sub_group, func);
             }
         }
-
     }
 
     void SimulationPanel::onInitialize()
@@ -66,11 +60,13 @@ namespace q_simulation_interfaces
 
         // check if the InteractiveMarkers display already exists
 
-        const auto isInteractiveMarkerDisplay = [this](rviz_common::Display* display) {
+        const auto isInteractiveMarkerDisplay = [this](rviz_common::Display* display)
+        {
             if (display->getClassId() == InteractiveMarkerClassId)
             {
                 auto property = display->findProperty(InteractiveMarkerNamespacePropertyName);
-                if (property && property->getValue().toString() == QString::fromStdString(InteractiveMarkerNamespaceValue))
+                if (property &&
+                    property->getValue().toString() == QString::fromStdString(InteractiveMarkerNamespaceValue))
                 {
                     std::cout << "Found InteractiveMarkers display with namespace: "
                               << property->getValue().toString().toStdString() << std::endl;

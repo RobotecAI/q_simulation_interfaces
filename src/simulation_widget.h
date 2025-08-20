@@ -1,6 +1,5 @@
 #pragma once
 
-#include "service.h"
 #include <QVBoxLayout>
 #include <QWidget>
 #include <interactive_markers/interactive_marker_server.hpp>
@@ -8,19 +7,20 @@
 #include <rclcpp/rclcpp.hpp>
 #include <rviz_common/panel.hpp>
 #include <rviz_common/ros_integration/ros_node_abstraction_iface.hpp>
-#include <thread>
 #include <tf2_ros/buffer.h>
 #include <tf2_ros/transform_listener.h>
+#include <thread>
+#include "service.h"
 
-#include <simulation_interfaces/srv/get_spawnables.hpp>
-#include <simulation_interfaces/srv/spawn_entity.hpp>
+#include <simulation_interfaces/srv/delete_entity.hpp>
 #include <simulation_interfaces/srv/get_entities.hpp>
 #include <simulation_interfaces/srv/get_entity_state.hpp>
-#include <simulation_interfaces/srv/set_entity_state.hpp>
-#include <simulation_interfaces/srv/delete_entity.hpp>
-#include <simulation_interfaces/srv/reset_simulation.hpp>
 #include <simulation_interfaces/srv/get_simulation_state.hpp>
+#include <simulation_interfaces/srv/get_spawnables.hpp>
+#include <simulation_interfaces/srv/reset_simulation.hpp>
+#include <simulation_interfaces/srv/set_entity_state.hpp>
 #include <simulation_interfaces/srv/set_simulation_state.hpp>
+#include <simulation_interfaces/srv/spawn_entity.hpp>
 #include <simulation_interfaces/srv/step_simulation.hpp>
 
 namespace Ui
@@ -98,4 +98,4 @@ namespace q_simulation_interfaces
         std::unique_ptr<tf2_ros::Buffer> tf_buffer_;
         std::unique_ptr<tf2_ros::TransformListener> tf_listener_;
     };
-}
+} // namespace q_simulation_interfaces
