@@ -1,0 +1,5 @@
+<library path="q_simulation_interfaces">
+  <class name="SimulationInterfacesPanel" type="q_simulation_interfaces::SimulationPanel" base_class_type="rviz_common::Panel">
+    <description>Simulation Interface Panel for controlling simulation entities and state</description>
+  </class>
+</library>
