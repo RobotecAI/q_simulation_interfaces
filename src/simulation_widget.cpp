@@ -451,7 +451,7 @@ namespace q_simulation_interfaces
                                     response->state.pose.orientation.z, response->state.pose.orientation.w);
 
                 const auto axis = q.getAxis();
-                const auto angle = q.getAngle();
+                const auto angle = qRadiansToDegrees(q.getAngle());
                 ui_->RotVector->setText(VectorToQstring(axis));
                 ui_->RotAngle->setValue(angle);
                 if (response->state.header.frame_id.empty())
