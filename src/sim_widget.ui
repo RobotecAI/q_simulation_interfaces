@@ -18,7 +18,11 @@
      </property>
      <widget class="QWidget" name="simulation">
       <attribute name="title">
+<<<<<<< HEAD
        <string>Simulation</string>
+=======
+       <string>SImulation</string>
+>>>>>>> 59fa5a8 (Change into tabs)
       </attribute>
       <layout class="QGridLayout" name="gridLayout">
        <item row="1" column="2">
