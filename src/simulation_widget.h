@@ -22,13 +22,14 @@
 #include <simulation_interfaces/srv/set_simulation_state.hpp>
 #include <simulation_interfaces/srv/spawn_entity.hpp>
 #include <simulation_interfaces/srv/step_simulation.hpp>
-
+#include <QComboBox>
 namespace Ui
 {
     class simWidgetUi;
 }
 namespace q_simulation_interfaces
 {
+    constexpr const char IDLPropertyName[]  = "IDLPropertyName";
     const char InteractiveMarkerNamespaceValue[] = "simulation_interfaces_panel";
     class SimulationWidget : public QWidget
     {
@@ -46,6 +47,7 @@ namespace q_simulation_interfaces
         void hideEvent(QHideEvent* event) override;
         void showEvent(QShowEvent* event) override;
 
+        void onShowServicesTab();
         void GetSpawnables();
         void SpawnButton();
         void GetAllEntities();
@@ -91,6 +93,11 @@ namespace q_simulation_interfaces
 
         // Vector to hold all service interfaces of created services
         std::vector<std::shared_ptr<ServiceInterface>> serviceInterfaces_;
+
+        std::map<std::string, QComboBox*> serviceComboBoxesByIDLType_;
+        std::map<std::string, QLabel*> serviceLabelsByIDLType_;
+        std::map<std::string, std::shared_ptr<ServiceInterface>> serviceInterfacesByIDLType_;
+
         QTimer* timer_; //! Timer for periodic updates
 
         std::shared_ptr<interactive_markers::InteractiveMarkerServer> interactiveMarkerServer_;

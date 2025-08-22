@@ -14,6 +14,7 @@
 #include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 #include <visualization_msgs/msg/interactive_marker.hpp>
 #include <visualization_msgs/msg/interactive_marker_control.hpp>
+
 namespace q_simulation_interfaces
 {
     namespace
@@ -105,6 +106,14 @@ namespace q_simulation_interfaces
                 &SimulationWidget::UpdateSpawnPointMarker);
         connect(ui_->doubleSpinBoxZ, QOverload<double>::of(&QDoubleSpinBox::valueChanged), this,
                 &SimulationWidget::UpdateSpawnPointMarker);
+        // ui_->
+        connect(ui_->tabWidget, &QTabWidget::currentChanged, this, [this](int index)
+        {
+           if (ui_->tabWidget->widget(index) == ui_->servicesNames)
+           {
+               this->onShowServicesTab();
+           }
+        });
     }
 
     SimulationWidget::~SimulationWidget()
@@ -173,6 +182,19 @@ namespace q_simulation_interfaces
 
         // Create spawn point marker
         CreateSpawnPointMarker();
+        for (const auto& service : serviceInterfaces_)
+        {
+            const auto idlTypeName= service->get_service_type();
+            auto* comboBox= new QComboBox(this);
+            auto* label = new QLabel(this);
+            comboBox->setProperty(IDLPropertyName, QString::fromStdString(idlTypeName));
+            serviceComboBoxesByIDLType_[idlTypeName] = comboBox;
+            serviceLabelsByIDLType_[idlTypeName] = label;
+            serviceInterfacesByIDLType_[idlTypeName] = service;
+            ui_->servicesNames->layout()->addWidget(comboBox);
+            ui_->servicesNames->layout()->addWidget(label);
+        }
+        onShowServicesTab();
     }
 
     void SimulationWidget::hideEvent(QHideEvent* event)
@@ -694,6 +716,39 @@ namespace q_simulation_interfaces
     {
         ui_->spawnFrameLineEdit->setText(frame_id);
         ui_->frameStateLineEdit->setText(frame_id);
+    }
+
+    void SimulationWidget::onShowServicesTab()
+    {
+        auto allServices = node_->get_service_names_and_types();
+
+        std::map<std::string, std::string> availableServicesByType;
+        for (const auto [name, service] : allServices)
+        {
+            if (service.empty())
+            {
+                continue;
+            }
+            availableServicesByType[service.front()] = name;
+        }
+        for (const auto& [_, combo] : serviceComboBoxesByIDLType_)
+        {
+            combo->clear();
+        }
+        for (const auto& [idlType, combo] : serviceComboBoxesByIDLType_)
+        {
+            auto label = serviceLabelsByIDLType_.at(idlType);
+            auto service = serviceInterfacesByIDLType_.at(idlType);
+            // Add to layout if not already added
+            // Check if the combo box is already in the layout
+            label->setText(QString("%1 : %2").arg(QString::fromStdString(idlType), QString::fromStdString(service->get_service_name())));
+            if (availableServicesByType.find(idlType) != availableServicesByType.end())
+            {
+                combo->addItem(QString::fromStdString(availableServicesByType.at(idlType)));
+                label->setStyleSheet("QLabel { color : black; }");
+            }
+        }
+        std::cout << "SimulationWidget::onShowServicesTab()" << std::endl;
     }
 
 } // namespace q_simulation_interfaces

@@ -8,7 +8,7 @@
 #include <type_traits>
 #include <variant>
 #include "string_to_keys.h"
-
+#include <rosidl_runtime_cpp/traits.hpp>
 //! Simple expected-like class, where T is the expected type and error is a string.
 //! This class is used to handle service responses and errors in a more structured way.
 template <typename T>
@@ -87,6 +87,10 @@ public:
     //! Pokes the service to check if the result is ready.
     //! This method should be called periodically to check if the service call has completed.
     virtual void check_service_result() = 0;
+    virtual std::string get_service_type() const = 0;
+    virtual std::string get_service_name() const = 0;
+    virtual void setServiceName(const std::string& new_name) = 0;
+
 };
 
 //! Template class for a service client that can call a service asynchronously or synchronously.
@@ -144,6 +148,23 @@ public:
         service_called_time_ = std::chrono::system_clock::now();
     }
 
+    void setServiceName(const std::string& new_name) override
+    {
+        if (client_->get_service_name() != new_name)
+        {
+            client_ = node_->create_client<T>(new_name);
+        }
+    }
+
+    std::string get_service_name() const override
+    {
+        return client_->get_service_name();
+    }
+    std::string get_service_type() const override
+    {
+        std::string type_name = rosidl_generator_traits::name<T>();
+        return type_name;
+    }
     //! Checks the service result and calls the callback if the result is ready.
     //! This method should be called periodically to check if the service call has completed.
     void check_service_result() override

@@ -6,15 +6,15 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>695</width>
-    <height>901</height>
+    <width>693</width>
+    <height>442</height>
    </rect>
   </property>
-  <layout class="QVBoxLayout" name="verticalLayout_4">
-   <item>
+  <layout class="QFormLayout" name="formLayout">
+   <item row="0" column="0">
     <widget class="QTabWidget" name="tabWidget">
      <property name="currentIndex">
-      <number>0</number>
+      <number>3</number>
      </property>
      <widget class="QWidget" name="simulation">
       <attribute name="title">
@@ -518,6 +518,15 @@
         </widget>
        </item>
       </layout>
+     </widget>
+     <widget class="QWidget" name="servicesNames">
+      <property name="enabled">
+       <bool>true</bool>
+      </property>
+      <attribute name="title">
+       <string>Services</string>
+      </attribute>
+      <layout class="QVBoxLayout" name="servicesLayout"/>
      </widget>
     </widget>
    </item>
