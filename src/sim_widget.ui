@@ -18,7 +18,7 @@
      </property>
      <widget class="QWidget" name="simulation">
       <attribute name="title">
-       <string>SImulation</string>
+       <string>Simulation</string>
       </attribute>
       <layout class="QGridLayout" name="gridLayout">
        <item row="1" column="2">
