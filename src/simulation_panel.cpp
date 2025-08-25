@@ -12,7 +12,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
- 
+
 #include <QVBoxLayout>
 #include <q_simulation_interfaces/simulation_panel.h>
 #include <rviz_common/display_group.hpp>
