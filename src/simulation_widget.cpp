@@ -24,7 +24,7 @@
 #include "service.h"
 #include "string_to_keys.h"
 #include "ui_sim_widget.h"
-#include "vector_utils.hpp"
+#include "vector_utils.h"
 
 #include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 #include <visualization_msgs/msg/interactive_marker.hpp>
