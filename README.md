@@ -1,6 +1,6 @@
 # QSimulationInterfaces
 
-A Gui Tool to change the simulation parameters using a GUI interface.
+A tool to change the simulation parameters using a GUI interface.
 It utilizes https://github.com/ros-simulation/simulation_interfaces to change the simulation parameters.
 
 # Prerequisites
@@ -22,7 +22,7 @@ source install/setup.bash
 
 The tool is available in two flavors:
 
-- A standalone GUI application that can be launched as ROS 2 node:
+- A standalone GUI application that can be launched as a ROS 2 node:
 ```shell  
 ros2 run q_simulation_interfaces q_simulation_interfaces_standalone
 ```

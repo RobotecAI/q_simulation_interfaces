@@ -1,3 +1,18 @@
+/* Copyright 2025, Robotec.ai sp. z o.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 #include "simulation_widget.h"
 #include <QMessageBox>
 #include <QTimer>
@@ -9,7 +24,7 @@
 #include "service.h"
 #include "string_to_keys.h"
 #include "ui_sim_widget.h"
-#include "vector_utils.hpp"
+#include "vector_utils.h"
 
 #include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 #include <visualization_msgs/msg/interactive_marker.hpp>
