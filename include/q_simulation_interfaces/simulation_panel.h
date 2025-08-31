@@ -33,6 +33,8 @@ namespace q_simulation_interfaces
         void onInitialize() override;
         QString getName() const override;
         void hideEvent(QHideEvent* event) override;
+        void save(rviz_common::Config config) const override;
+        void load(const rviz_common::Config& config) override;
 
     private:
         SimulationWidget* simulationWidget_;

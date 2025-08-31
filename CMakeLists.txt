@@ -40,9 +40,10 @@ set(CMAKE_CXX_STANDARD 17)
 
 qt5_wrap_cpp(MOC_FILES
         include/q_simulation_interfaces/simulation_panel.h
+        include/q_simulation_interfaces/service_discovery.h
 )
 
-set(SOURCES src/simulation_widget.cpp src/simulation_panel.cpp)
+set(SOURCES src/simulation_widget.cpp src/simulation_panel.cpp src/service_discovery.cpp)
 
 add_library(${PROJECT_NAME} SHARED ${SOURCES} ${MOC_FILES})
 target_include_directories(${PROJECT_NAME} PUBLIC

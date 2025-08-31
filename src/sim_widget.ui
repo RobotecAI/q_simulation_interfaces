@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>693</width>
+    <width>701</width>
     <height>442</height>
    </rect>
   </property>
@@ -18,11 +18,7 @@
      </property>
      <widget class="QWidget" name="simulation">
       <attribute name="title">
-<<<<<<< HEAD
        <string>Simulation</string>
-=======
-       <string>SImulation</string>
->>>>>>> 59fa5a8 (Change into tabs)
       </attribute>
       <layout class="QGridLayout" name="gridLayout">
        <item row="1" column="2">
@@ -530,7 +526,29 @@
       <attribute name="title">
        <string>Services</string>
       </attribute>
-      <layout class="QVBoxLayout" name="servicesLayout"/>
+      <layout class="QVBoxLayout" name="servicesLayout">
+       <item>
+        <widget class="QPushButton" name="discoverServicesButton">
+         <property name="text">
+          <string>Discover services</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QPushButton" name="autoSelectServices">
+         <property name="text">
+          <string>Auto select services</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QCheckBox" name="autodiscoverServicesCheckbox">
+         <property name="text">
+          <string>Auto discover services</string>
+         </property>
+        </widget>
+       </item>
+      </layout>
      </widget>
     </widget>
    </item>

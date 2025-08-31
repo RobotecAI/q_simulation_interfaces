@@ -13,11 +13,14 @@
  * limitations under the License.
  */
 
+#include <QScrollArea>
 #include <QVBoxLayout>
 #include <q_simulation_interfaces/simulation_panel.h>
 #include <rviz_common/display_group.hpp>
 #include <rviz_common/panel.hpp>
 #include "simulation_widget.h"
+
+
 namespace q_simulation_interfaces
 {
     namespace
@@ -28,8 +31,15 @@ namespace q_simulation_interfaces
     SimulationPanel::SimulationPanel(QWidget* parent)
     {
         simulationWidget_ = new SimulationWidget(this);
+
+        auto* scrollArea = new QScrollArea(this);
+        scrollArea->setWidget(simulationWidget_);
+        scrollArea->setWidgetResizable(true);
+        scrollArea->setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
+        scrollArea->setHorizontalScrollBarPolicy(Qt::ScrollBarAsNeeded);
+
         QVBoxLayout* layout = new QVBoxLayout(this);
-        layout->addWidget(simulationWidget_);
+        layout->addWidget(scrollArea);
         setLayout(layout);
     }
 
@@ -122,5 +132,23 @@ namespace q_simulation_interfaces
 
 
     QString SimulationPanel::getName() const { return "Simulation Panel"; }
+
+    void SimulationPanel::save(rviz_common::Config config) const
+    {
+        rviz_common::Panel::save(config);
+        if (simulationWidget_)
+        {
+            const_cast<SimulationWidget*>(simulationWidget_)->getServiceDiscovery().saveConfig(config);
+        }
+    }
+
+    void SimulationPanel::load(const rviz_common::Config& config)
+    {
+        rviz_common::Panel::load(config);
+        if (simulationWidget_)
+        {
+            simulationWidget_->getServiceDiscovery().loadConfig(config);
+        }
+    }
 
 } // namespace q_simulation_interfaces

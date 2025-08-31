@@ -27,6 +27,8 @@
 #include <thread>
 #include "service.h"
 
+#include <QComboBox>
+#include <q_simulation_interfaces/service_discovery.h>
 #include <simulation_interfaces/srv/delete_entity.hpp>
 #include <simulation_interfaces/srv/get_entities.hpp>
 #include <simulation_interfaces/srv/get_entity_state.hpp>
@@ -37,14 +39,13 @@
 #include <simulation_interfaces/srv/set_simulation_state.hpp>
 #include <simulation_interfaces/srv/spawn_entity.hpp>
 #include <simulation_interfaces/srv/step_simulation.hpp>
-#include <QComboBox>
+
 namespace Ui
 {
     class simWidgetUi;
 }
 namespace q_simulation_interfaces
 {
-    constexpr const char IDLPropertyName[]  = "IDLPropertyName";
     const char InteractiveMarkerNamespaceValue[] = "simulation_interfaces_panel";
     class SimulationWidget : public QWidget
     {
@@ -56,6 +57,8 @@ namespace q_simulation_interfaces
 
         void SetFixedFrame(const QString& frame_id);
         void initialize(rclcpp::Node::SharedPtr node = nullptr);
+
+        ServiceDiscovery& getServiceDiscovery() { return serviceDiscovery_; }
 
     private:
         // QWidget interface
@@ -79,12 +82,11 @@ namespace q_simulation_interfaces
         //! The thread with own ROS 2 node that will run the action client
         void ActionThreadWorker(int steps);
 
-        //! Called periodically to update the state of the services
-        void UpdateServices();
-
         //! Create and update spawn point interactive marker
         void CreateSpawnPointMarker();
         void UpdateSpawnPointMarker();
+
+        void UpdateService(ServiceType serviceType, const QString& selectedService);
 
         std::thread actionThread_;
         std::atomic<bool> actionThreadRunning_{false}; //! Flag to control the action thread
@@ -92,6 +94,8 @@ namespace q_simulation_interfaces
 
         Ui::simWidgetUi* ui_;
         rclcpp::Node::SharedPtr node_;
+
+        ServiceDiscovery serviceDiscovery_;
 
         // Service member variables
         std::shared_ptr<Service<simulation_interfaces::srv::GetSpawnables>> getSpawnablesService_;
@@ -106,14 +110,15 @@ namespace q_simulation_interfaces
         std::shared_ptr<Service<simulation_interfaces::srv::SetSimulationState>> setSimulationStateService_;
         std::shared_ptr<Service<simulation_interfaces::srv::StepSimulation>> stepSimulationService_;
 
+        // Action names
+        std::string simulateStepsAction_ = "";
+
         // Vector to hold all service interfaces of created services
         std::vector<std::shared_ptr<ServiceInterface>> serviceInterfaces_;
 
         std::map<std::string, QComboBox*> serviceComboBoxesByIDLType_;
         std::map<std::string, QLabel*> serviceLabelsByIDLType_;
         std::map<std::string, std::shared_ptr<ServiceInterface>> serviceInterfacesByIDLType_;
-
-        QTimer* timer_; //! Timer for periodic updates
 
         std::shared_ptr<interactive_markers::InteractiveMarkerServer> interactiveMarkerServer_;
 
