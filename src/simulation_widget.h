@@ -82,6 +82,9 @@ namespace q_simulation_interfaces
         //! The thread with own ROS 2 node that will run the action client
         void ActionThreadWorker(int steps);
 
+        //! Called periodically to update the state of the services
+        void UpdateServices();
+
         //! Create and update spawn point interactive marker
         void CreateSpawnPointMarker();
         void UpdateSpawnPointMarker();
@@ -114,7 +117,8 @@ namespace q_simulation_interfaces
         std::string simulateStepsAction_ = "";
 
         // Vector to hold all service interfaces of created services
-        std::vector<std::shared_ptr<ServiceInterface>> serviceInterfaces_;
+        std::set<std::shared_ptr<ServiceInterface>> serviceInterfaces_;
+        QTimer* timer_; //! Timer for periodic updates
 
         std::map<std::string, QComboBox*> serviceComboBoxesByIDLType_;
         std::map<std::string, QLabel*> serviceLabelsByIDLType_;

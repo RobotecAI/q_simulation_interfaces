@@ -96,6 +96,11 @@ namespace q_simulation_interfaces
             ui_->simStateToSetComboBox->addItem(QString::fromStdString(name));
         }
 
+        timer_ = new QTimer(this);
+        connect(timer_, &QTimer::timeout, this, &SimulationWidget::UpdateServices);
+        timer_->setSingleShot(false);
+        timer_->start(100);
+
         connect(ui_->PushButtonRefresh, &QPushButton::clicked, this, &SimulationWidget::GetSpawnables);
         connect(ui_->SpawnButton, &QPushButton::clicked, this, &SimulationWidget::SpawnButton);
         connect(ui_->getAllEntitiesButton, &QPushButton::clicked, this, &SimulationWidget::GetAllEntities);
@@ -661,6 +666,29 @@ namespace q_simulation_interfaces
         getSpawnablesService_->call_service_async(cb);
     }
 
+    void SimulationWidget::UpdateServices()
+    {
+
+        if (actionThreadRunning_)
+        {
+            ui_->stepSimButtonAction->setEnabled(false);
+            ui_->stepSimServiceButton->setEnabled(false);
+        }
+        else
+        {
+            ui_->stepSimButtonAction->setEnabled(true);
+            ui_->stepSimServiceButton->setEnabled(true);
+        }
+        ui_->simProgressBar->setValue(static_cast<int>(this->actionThreadProgress_ * 100));
+        for (auto& service : serviceInterfaces_)
+        {
+            if (service)
+            {
+                service->check_service_result();
+            }
+        }
+    }
+
     void SimulationWidget::CreateSpawnPointMarker()
     {
         if (!interactiveMarkerServer_)
@@ -739,60 +767,115 @@ namespace q_simulation_interfaces
         switch (serviceType)
         {
         case ServiceType::SERVICE_GET_SPAWNABLES:
+            serviceInterfaces_.erase(getSpawnablesService_);
             getSpawnablesService_ = shouldReset
                 ? nullptr
                 : std::make_shared<Service<simulation_interfaces::srv::GetSpawnables>>(selectedServiceName, node_);
+            if (getSpawnablesService_)
+            {
+                serviceInterfaces_.insert(getSpawnablesService_);
+            }
             break;
         case ServiceType::SERVICE_SPAWN_ENTITY:
+            serviceInterfaces_.erase(spawnEntityService_);
             spawnEntityService_ = shouldReset
                 ? nullptr
                 : std::make_shared<Service<simulation_interfaces::srv::SpawnEntity>>(selectedServiceName, node_);
+            if (spawnEntityService_)
+            {
+                serviceInterfaces_.insert(spawnEntityService_);
+            }
             break;
         case ServiceType::SERVICE_GET_ENTITIES:
+            serviceInterfaces_.erase(getEntitiesService_);
             getEntitiesService_ = shouldReset
                 ? nullptr
                 : std::make_shared<Service<simulation_interfaces::srv::GetEntities>>(selectedServiceName, node_);
+            if (getEntitiesService_)
+            {
+                serviceInterfaces_.insert(getEntitiesService_);
+            }
             break;
         case ServiceType::SERVICE_GET_ENTITY_STATE:
+            serviceInterfaces_.erase(getEntityStateService_);
             getEntityStateService_ = shouldReset
                 ? nullptr
                 : std::make_shared<Service<simulation_interfaces::srv::GetEntityState>>(selectedServiceName, node_);
+            if (getEntityStateService_)
+            {
+                serviceInterfaces_.insert(getEntityStateService_);
+            }
             break;
         case ServiceType::SERVICE_SET_ENTITY_STATE:
+            serviceInterfaces_.erase(setEntityStateService_);
             setEntityStateService_ = shouldReset
                 ? nullptr
                 : std::make_shared<Service<simulation_interfaces::srv::SetEntityState>>(selectedServiceName, node_);
+            if (setEntityStateService_)
+            {
+                serviceInterfaces_.insert(setEntityStateService_);
+            }
             break;
         case ServiceType::SERVICE_DELETE_ENTITY:
+            serviceInterfaces_.erase(deleteEntityService_);
             deleteEntityService_ = shouldReset
                 ? nullptr
                 : std::make_shared<Service<simulation_interfaces::srv::DeleteEntity>>(selectedServiceName, node_);
+            if (deleteEntityService_)
+            {
+                serviceInterfaces_.insert(deleteEntityService_);
+            }
             break;
         case ServiceType::SERVICE_GET_SIM_FEATURES:
+            serviceInterfaces_.erase(getSimFeaturesService_);
             getSimFeaturesService_ = shouldReset
                 ? nullptr
                 : std::make_shared<Service<simulation_interfaces::srv::GetSimulatorFeatures>>(selectedServiceName,
                                                                                               node_);
+            if (getSimFeaturesService_)
+            {
+                serviceInterfaces_.insert(getSimFeaturesService_);
+            }
             break;
         case ServiceType::SERVICE_RESET_SIMULATION:
+            serviceInterfaces_.erase(resetSimulationService_);
             resetSimulationService_ = shouldReset
                 ? nullptr
                 : std::make_shared<Service<simulation_interfaces::srv::ResetSimulation>>(selectedServiceName, node_);
+            if (resetSimulationService_)
+            {
+                serviceInterfaces_.insert(resetSimulationService_);
+            }
             break;
         case ServiceType::SERVICE_STEP_SIMULATION:
+            serviceInterfaces_.erase(stepSimulationService_);
             stepSimulationService_ = shouldReset
                 ? nullptr
                 : std::make_shared<Service<simulation_interfaces::srv::StepSimulation>>(selectedServiceName, node_);
+            if (stepSimulationService_)
+            {
+                serviceInterfaces_.insert(stepSimulationService_);
+            }
             break;
         case ServiceType::SERVICE_GET_SIM_STATE:
+            serviceInterfaces_.erase(getSimulationStateService_);
             getSimulationStateService_ = shouldReset
                 ? nullptr
                 : std::make_shared<Service<simulation_interfaces::srv::GetSimulationState>>(selectedServiceName, node_);
+            if (getSimulationStateService_)
+            {
+                serviceInterfaces_.insert(getSimulationStateService_);
+            }
             break;
         case ServiceType::SERVICE_SET_SIM_STATE:
+            serviceInterfaces_.erase(setSimulationStateService_);
             setSimulationStateService_ = shouldReset
                 ? nullptr
                 : std::make_shared<Service<simulation_interfaces::srv::SetSimulationState>>(selectedServiceName, node_);
+            if (setSimulationStateService_)
+            {
+                serviceInterfaces_.insert(setSimulationStateService_);
+            }
             break;
         case ServiceType::ACTION_SIMULATE_STEPS:
             simulateStepsAction_ = selectedServiceName;
