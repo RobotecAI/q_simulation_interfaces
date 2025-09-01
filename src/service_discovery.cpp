@@ -30,7 +30,7 @@ namespace q_simulation_interfaces
         qRegisterMetaType<q_simulation_interfaces::ServiceType>("q_simulation_interfaces::ServiceType");
 
         autoDiscoveryTimer_ = new QTimer(this);
-        connect(autoDiscoveryTimer_, &QTimer::timeout, this, &ServiceDiscovery::discoverServices);
+        connect(autoDiscoveryTimer_, &QTimer::timeout, this, &ServiceDiscovery::autoSelectServices);
     }
 
     ServiceDiscovery::~ServiceDiscovery()
@@ -76,7 +76,6 @@ namespace q_simulation_interfaces
         // Find existing buttons
         discoverButton_ = parent_->findChild<QPushButton*>("discoverServicesButton");
         autoDiscoveryCheckBox_ = parent_->findChild<QCheckBox*>("autodiscoverServicesCheckbox");
-        autoSelectServicesButton_ = parent_->findChild<QPushButton*>("autoSelectServices");
 
         if (discoverButton_)
         {
@@ -85,12 +84,15 @@ namespace q_simulation_interfaces
 
         if (autoDiscoveryCheckBox_)
         {
-            connect(autoDiscoveryCheckBox_, &QCheckBox::toggled, this, &ServiceDiscovery::onAutoDiscoveryToggled);
-        }
-
-        if (autoSelectServicesButton_)
-        {
-            connect(autoSelectServicesButton_, &QPushButton::clicked, this, &ServiceDiscovery::autoSelectServices);
+            if (autoDiscoveryCheckBox_->isChecked())
+            {
+                startAutoService();
+            }
+            else
+            {
+                stopAutoService();
+            }
+            connect(autoDiscoveryCheckBox_, &QCheckBox::toggled, this, &ServiceDiscovery::onAutoSelectToggled);
         }
 
         for (const auto& idlType : SUPPORTED_SERVICE_IDL_TYPES)
@@ -131,7 +133,7 @@ namespace q_simulation_interfaces
                 {
                     continue;
                 }
-            
+
 
                 for (const auto& serviceType : serviceTypes)
                 {
@@ -171,9 +173,8 @@ namespace q_simulation_interfaces
                     comboBox->clear();
                     comboBox->addItem("Not selected");
 
-                    auto it = discovered.find(serviceInfo.type_string);
                     int selectedIndex = 0;
-                    if (it != discovered.end())
+                    if (auto it = discovered.find(serviceInfo.type_string); it != discovered.end())
                     {
                         int idx = 1; // Start after "Not selected"
                         for (const auto& serviceName : it->second)
@@ -201,31 +202,33 @@ namespace q_simulation_interfaces
 
     void ServiceDiscovery::autoSelectServices()
     {
-        // For each service type, if only one service is available, select it automatically
+        discoverServices();
+
+        // For each service type, select first automatically if not selected is selected.
         for (const auto& serviceInfo : SUPPORTED_SERVICE_IDL_TYPES)
         {
             QComboBox* comboBox = serviceComboBoxes_[serviceInfo.type];
-            if (comboBox && comboBox->count() == 2) // "Not selected" + 1 available service
+            if (comboBox && comboBox->count() > 1 && comboBox->currentIndex() == 0) // "Not selected" is selected
             {
-                comboBox->setCurrentIndex(1); // Select the only available service
+                comboBox->setCurrentIndex(1); // Select the first available service
                 emit serviceComboBoxChanged(serviceInfo.type, comboBox->currentText());
             }
         }
     }
 
-    void ServiceDiscovery::startServiceDiscovery() { autoDiscoveryTimer_->start(1000); }
+    void ServiceDiscovery::startAutoService() { autoDiscoveryTimer_->start(1000); }
 
-    void ServiceDiscovery::stopServiceDiscovery() { autoDiscoveryTimer_->stop(); }
+    void ServiceDiscovery::stopAutoService() { autoDiscoveryTimer_->stop(); }
 
-    void ServiceDiscovery::onAutoDiscoveryToggled(bool enabled)
+    void ServiceDiscovery::onAutoSelectToggled(bool enabled)
     {
         if (enabled)
         {
-            startServiceDiscovery();
+            startAutoService();
         }
         else
         {
-            stopServiceDiscovery();
+            stopAutoService();
         }
     }
 

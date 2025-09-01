@@ -762,8 +762,8 @@ namespace q_simulation_interfaces
 
     void SimulationWidget::UpdateService(ServiceType serviceType, const QString& selectedService)
     {
-        auto selectedServiceName = selectedService.toStdString();
-        bool shouldReset = selectedServiceName.empty();
+        const auto selectedServiceName = selectedService.toStdString();
+        const bool shouldReset = selectedServiceName.empty();
         switch (serviceType)
         {
         case ServiceType::SERVICE_GET_SPAWNABLES:

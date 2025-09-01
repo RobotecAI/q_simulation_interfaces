@@ -14,7 +14,7 @@
    <item row="0" column="0">
     <widget class="QTabWidget" name="tabWidget">
      <property name="currentIndex">
-      <number>3</number>
+      <number>0</number>
      </property>
      <widget class="QWidget" name="simulation">
       <attribute name="title">
@@ -535,16 +535,12 @@
         </widget>
        </item>
        <item>
-        <widget class="QPushButton" name="autoSelectServices">
+        <widget class="QCheckBox" name="autodiscoverServicesCheckbox">
          <property name="text">
           <string>Auto select services</string>
          </property>
-        </widget>
-       </item>
-       <item>
-        <widget class="QCheckBox" name="autodiscoverServicesCheckbox">
-         <property name="text">
-          <string>Auto discover services</string>
+         <property name="checked">
+          <bool>true</bool>
          </property>
         </widget>
        </item>

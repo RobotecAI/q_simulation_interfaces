@@ -98,7 +98,7 @@ namespace q_simulation_interfaces
         void serviceComboBoxChanged(ServiceType idlType, const QString& selectedService);
 
     private slots:
-        void onAutoDiscoveryToggled(bool enabled);
+        void onAutoSelectToggled(bool enabled);
 
     private:
         void createServiceComboBox(const ServiceInfo& idlType, QVBoxLayout* layout);
@@ -106,8 +106,8 @@ namespace q_simulation_interfaces
         void onServiceComboBoxChanged(const QString& selectedService);
 
         void discoverServices();
-        void startServiceDiscovery();
-        void stopServiceDiscovery();
+        void startAutoService();
+        void stopAutoService();
 
         void autoSelectServices();
 
@@ -116,7 +116,6 @@ namespace q_simulation_interfaces
 
         // Buttons for controlling the service discovery
         QPushButton* discoverButton_;
-        QPushButton* autoSelectServicesButton_;
         QCheckBox* autoDiscoveryCheckBox_;
 
         // Automatic service discovery
