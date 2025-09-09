@@ -6,12 +6,12 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>695</width>
-    <height>901</height>
+    <width>701</width>
+    <height>442</height>
    </rect>
   </property>
-  <layout class="QVBoxLayout" name="verticalLayout_4">
-   <item>
+  <layout class="QFormLayout" name="formLayout">
+   <item row="0" column="0">
     <widget class="QTabWidget" name="tabWidget">
      <property name="currentIndex">
       <number>0</number>
@@ -514,6 +514,33 @@
         <widget class="QPushButton" name="SpawnButton">
          <property name="text">
           <string>Spawn!</string>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+     <widget class="QWidget" name="servicesNames">
+      <property name="enabled">
+       <bool>true</bool>
+      </property>
+      <attribute name="title">
+       <string>Services</string>
+      </attribute>
+      <layout class="QVBoxLayout" name="servicesLayout">
+       <item>
+        <widget class="QPushButton" name="discoverServicesButton">
+         <property name="text">
+          <string>Discover services</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QCheckBox" name="autodiscoverServicesCheckbox">
+         <property name="text">
+          <string>Auto select services</string>
+         </property>
+         <property name="checked">
+          <bool>true</bool>
          </property>
         </widget>
        </item>

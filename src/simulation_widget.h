@@ -27,6 +27,8 @@
 #include <thread>
 #include "service.h"
 
+#include <QComboBox>
+#include <q_simulation_interfaces/service_discovery.h>
 #include <simulation_interfaces/srv/delete_entity.hpp>
 #include <simulation_interfaces/srv/get_entities.hpp>
 #include <simulation_interfaces/srv/get_entity_state.hpp>
@@ -56,11 +58,14 @@ namespace q_simulation_interfaces
         void SetFixedFrame(const QString& frame_id);
         void initialize(rclcpp::Node::SharedPtr node = nullptr);
 
+        ServiceDiscovery& getServiceDiscovery() { return serviceDiscovery_; }
+
     private:
         // QWidget interface
         void hideEvent(QHideEvent* event) override;
         void showEvent(QShowEvent* event) override;
 
+        void onShowServicesTab();
         void GetSpawnables();
         void SpawnButton();
         void GetAllEntities();
@@ -84,12 +89,16 @@ namespace q_simulation_interfaces
         void CreateSpawnPointMarker();
         void UpdateSpawnPointMarker();
 
+        void UpdateService(ServiceType serviceType, const QString& selectedService);
+
         std::thread actionThread_;
         std::atomic<bool> actionThreadRunning_{false}; //! Flag to control the action thread
         std::atomic<float> actionThreadProgress_{0.0f}; //! Progress of the simulation step, used for UI updates
 
         Ui::simWidgetUi* ui_;
         rclcpp::Node::SharedPtr node_;
+
+        ServiceDiscovery serviceDiscovery_;
 
         // Service member variables
         std::shared_ptr<Service<simulation_interfaces::srv::GetSpawnables>> getSpawnablesService_;
@@ -104,9 +113,16 @@ namespace q_simulation_interfaces
         std::shared_ptr<Service<simulation_interfaces::srv::SetSimulationState>> setSimulationStateService_;
         std::shared_ptr<Service<simulation_interfaces::srv::StepSimulation>> stepSimulationService_;
 
+        // Action names
+        std::string simulateStepsAction_ = "";
+
         // Vector to hold all service interfaces of created services
-        std::vector<std::shared_ptr<ServiceInterface>> serviceInterfaces_;
+        std::set<std::shared_ptr<ServiceInterface>> serviceInterfaces_;
         QTimer* timer_; //! Timer for periodic updates
+
+        std::map<std::string, QComboBox*> serviceComboBoxesByIDLType_;
+        std::map<std::string, QLabel*> serviceLabelsByIDLType_;
+        std::map<std::string, std::shared_ptr<ServiceInterface>> serviceInterfacesByIDLType_;
 
         std::shared_ptr<interactive_markers::InteractiveMarkerServer> interactiveMarkerServer_;
 

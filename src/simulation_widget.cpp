@@ -29,6 +29,7 @@
 #include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 #include <visualization_msgs/msg/interactive_marker.hpp>
 #include <visualization_msgs/msg/interactive_marker_control.hpp>
+
 namespace q_simulation_interfaces
 {
     namespace
@@ -99,6 +100,7 @@ namespace q_simulation_interfaces
         connect(timer_, &QTimer::timeout, this, &SimulationWidget::UpdateServices);
         timer_->setSingleShot(false);
         timer_->start(100);
+
         connect(ui_->PushButtonRefresh, &QPushButton::clicked, this, &SimulationWidget::GetSpawnables);
         connect(ui_->SpawnButton, &QPushButton::clicked, this, &SimulationWidget::SpawnButton);
         connect(ui_->getAllEntitiesButton, &QPushButton::clicked, this, &SimulationWidget::GetAllEntities);
@@ -120,6 +122,9 @@ namespace q_simulation_interfaces
                 &SimulationWidget::UpdateSpawnPointMarker);
         connect(ui_->doubleSpinBoxZ, QOverload<double>::of(&QDoubleSpinBox::valueChanged), this,
                 &SimulationWidget::UpdateSpawnPointMarker);
+
+        // Connect the changes in the service UI
+        connect(&serviceDiscovery_, &ServiceDiscovery::serviceComboBoxChanged, this, &SimulationWidget::UpdateService);
     }
 
     SimulationWidget::~SimulationWidget()
@@ -138,53 +143,13 @@ namespace q_simulation_interfaces
         // tf transform listener
         tf_buffer_ = std::make_unique<tf2_ros::Buffer>(node->get_clock());
         tf_listener_ = std::make_unique<tf2_ros::TransformListener>(*tf_buffer_);
-        // Initialize service objects
-        getSpawnablesService_ =
-            std::make_shared<Service<simulation_interfaces::srv::GetSpawnables>>("/get_spawnables", node);
-        serviceInterfaces_.push_back(getSpawnablesService_);
 
-        spawnEntityService_ = std::make_shared<Service<simulation_interfaces::srv::SpawnEntity>>("/spawn_entity", node);
-        serviceInterfaces_.push_back(spawnEntityService_);
-
-        getEntitiesService_ = std::make_shared<Service<simulation_interfaces::srv::GetEntities>>("/get_entities", node);
-        serviceInterfaces_.push_back(getEntitiesService_);
-
-        getEntityStateService_ =
-            std::make_shared<Service<simulation_interfaces::srv::GetEntityState>>("/get_entity_state", node);
-        serviceInterfaces_.push_back(getEntityStateService_);
-
-        setEntityStateService_ =
-            std::make_shared<Service<simulation_interfaces::srv::SetEntityState>>("/set_entity_state", node);
-        serviceInterfaces_.push_back(setEntityStateService_);
-
-
-        deleteEntityService_ =
-            std::make_shared<Service<simulation_interfaces::srv::DeleteEntity>>("/delete_entity", node);
-        serviceInterfaces_.push_back(deleteEntityService_);
-
-
-        getSimFeaturesService_ = std::make_shared<Service<simulation_interfaces::srv::GetSimulatorFeatures>>(
-            "/get_simulator_features", node);
-        serviceInterfaces_.push_back(getSimFeaturesService_);
-
-        resetSimulationService_ =
-            std::make_shared<Service<simulation_interfaces::srv::ResetSimulation>>("/reset_simulation", node);
-        serviceInterfaces_.push_back(resetSimulationService_);
-
-        getSimulationStateService_ =
-            std::make_shared<Service<simulation_interfaces::srv::GetSimulationState>>("/get_simulation_state", node);
-        serviceInterfaces_.push_back(getSimulationStateService_);
-
-        setSimulationStateService_ =
-            std::make_shared<Service<simulation_interfaces::srv::SetSimulationState>>("/set_simulation_state", node);
-        serviceInterfaces_.push_back(setSimulationStateService_);
-
-        stepSimulationService_ =
-            std::make_shared<Service<simulation_interfaces::srv::StepSimulation>>("/step_simulation", node);
-        serviceInterfaces_.push_back(stepSimulationService_);
-        //
         interactiveMarkerServer_ =
             std::make_shared<interactive_markers::InteractiveMarkerServer>(InteractiveMarkerNamespaceValue, node);
+
+        // Initialize service discovery
+        serviceDiscovery_.initializeServiceUI(this);
+        serviceDiscovery_.initializeServices(node_);
 
         // Create spawn point marker
         CreateSpawnPointMarker();
@@ -212,6 +177,13 @@ namespace q_simulation_interfaces
 
     void SimulationWidget::GetSimulationState()
     {
+        if (!getSimulationStateService_)
+        {
+            QMessageBox::warning(this, "Service Not Available",
+                                 "Get Simulation State service is not available. Please select a valid service.");
+            return;
+        }
+
         auto cb = [this](auto response)
         {
             ProduceWarningIfProblem(this, "Get Simulation State", response);
@@ -238,6 +210,13 @@ namespace q_simulation_interfaces
 
     void SimulationWidget::SetSimulationState()
     {
+        if (!setSimulationStateService_)
+        {
+            QMessageBox::warning(this, "Service Not Available",
+                                 "Set Simulation State service is not available. Please select a valid service.");
+            return;
+        }
+
         simulation_interfaces::srv::SetSimulationState::Request request;
         auto selectedMode = ui_->simStateToSetComboBox->currentText();
         auto it = SimStateNameToId.find(selectedMode.toStdString());
@@ -261,7 +240,7 @@ namespace q_simulation_interfaces
         // create node for action client
         auto node = rclcpp::Node::make_shared("qt_gui_action_node");
         using SimulateSteps = simulation_interfaces::action::SimulateSteps;
-        auto client = rclcpp_action::create_client<SimulateSteps>(node, "/simulate_steps");
+        auto client = rclcpp_action::create_client<SimulateSteps>(node, simulateStepsAction_);
 
         auto send_goal_options = rclcpp_action::Client<SimulateSteps>::SendGoalOptions();
         auto goal = std::make_shared<SimulateSteps::Goal>();
@@ -318,6 +297,13 @@ namespace q_simulation_interfaces
 
     void SimulationWidget::StepSimulation()
     {
+        if (simulateStepsAction_.empty())
+        {
+            QMessageBox::warning(this, "Action Not Available",
+                                 "Step Simulation action is not available. Please select a valid action.");
+            return;
+        }
+
         int steps = ui_->stepsSpinBox->value();
         if (actionThreadRunning_.load() == true)
         {
@@ -335,6 +321,13 @@ namespace q_simulation_interfaces
 
     void SimulationWidget::ResetSimulation()
     {
+        if (!resetSimulationService_)
+        {
+            QMessageBox::warning(this, "Service Not Available",
+                                 "Reset Simulation service is not available. Please select a valid service.");
+            return;
+        }
+
         simulation_interfaces::srv::ResetSimulation::Request request;
         auto selectedMode = ui_->resetModeCombo->currentText();
         auto it = ScopeNameToId.find(selectedMode.toStdString());
@@ -356,6 +349,13 @@ namespace q_simulation_interfaces
 
     void SimulationWidget::GetSimFeatures()
     {
+        if (!getSimFeaturesService_)
+        {
+            QMessageBox::warning(this, "Service Not Available",
+                                 "Get Simulation Features service is not available. Please select a valid service.");
+            return;
+        }
+
         auto cb = [this](auto response)
         {
             ui_->listCapabilities->clear();
@@ -388,6 +388,13 @@ namespace q_simulation_interfaces
 
     void SimulationWidget::StepSimulationService()
     {
+        if (!stepSimulationService_)
+        {
+            QMessageBox::warning(this, "Service Not Available",
+                                 "Step Simulation service is not available. Please select a valid service.");
+            return;
+        }
+
         simulation_interfaces::srv::StepSimulation::Request request;
         request.steps = ui_->stepsSpinBox->value();
 
@@ -404,6 +411,13 @@ namespace q_simulation_interfaces
 
     void SimulationWidget::DespawnButton()
     {
+        if (!deleteEntityService_)
+        {
+            QMessageBox::warning(this, "Service Not Available",
+                                 "Delete Entity service is not available. Please select a valid service.");
+            return;
+        }
+
         simulation_interfaces::srv::DeleteEntity::Request request;
         request.entity = ui_->ComboEntities->currentText().toStdString();
 
@@ -421,6 +435,13 @@ namespace q_simulation_interfaces
 
     void SimulationWidget::GetAllEntities()
     {
+        if (!getEntitiesService_)
+        {
+            QMessageBox::warning(this, "Service Not Available",
+                                 "Get Entities service is not available. Please select a valid service.");
+            return;
+        }
+
         auto cb = [this](auto response)
         {
             ProduceWarningIfProblem(this, "GetAllEntities", response);
@@ -443,6 +464,13 @@ namespace q_simulation_interfaces
 
     void SimulationWidget::GetEntityState(bool silent)
     {
+        if (!getEntityStateService_)
+        {
+            QMessageBox::warning(this, "Service Not Available",
+                                 "Get Entity State service is not available. Please select a valid service.");
+            return;
+        }
+
         simulation_interfaces::srv::GetEntityState::Request request;
         request.entity = ui_->ComboEntities->currentText().toStdString();
 
@@ -531,6 +559,13 @@ namespace q_simulation_interfaces
 
     void SimulationWidget::SetEntityState()
     {
+        if (!setEntityStateService_)
+        {
+            QMessageBox::warning(this, "Service Not Available",
+                                 "Set Entity State service is not available. Please select a valid service.");
+            return;
+        }
+
         simulation_interfaces::srv::SetEntityState::Request request;
         request.entity = ui_->ComboEntities->currentText().toStdString();
         request.state.pose.position.x = ui_->StatePosX->value();
@@ -561,6 +596,13 @@ namespace q_simulation_interfaces
 
     void SimulationWidget::SpawnButton()
     {
+        if (!spawnEntityService_)
+        {
+            QMessageBox::warning(this, "Service Not Available",
+                                 "Spawn Entity service is not available. Please select a valid service.");
+            return;
+        }
+
         simulation_interfaces::srv::SpawnEntity::Request request;
         request.name = ui_->lineEditName->text().toStdString();
         request.uri = ui_->ComboSpawables->currentText().toStdString();
@@ -587,6 +629,13 @@ namespace q_simulation_interfaces
 
     void SimulationWidget::GetSpawnables()
     {
+        if (!getSpawnablesService_)
+        {
+            QMessageBox::warning(this, "Service Not Available",
+                                 "Get Spawnables service is not available. Please select a valid service.");
+            return;
+        }
+
         auto cb = [this](auto response)
         {
             ui_->ComboSpawables->clear();
@@ -709,6 +758,131 @@ namespace q_simulation_interfaces
     {
         ui_->spawnFrameLineEdit->setText(frame_id);
         ui_->frameStateLineEdit->setText(frame_id);
+    }
+
+    void SimulationWidget::UpdateService(ServiceType serviceType, const QString& selectedService)
+    {
+        const auto selectedServiceName = selectedService.toStdString();
+        const bool shouldReset = selectedServiceName.empty();
+        switch (serviceType)
+        {
+        case ServiceType::SERVICE_GET_SPAWNABLES:
+            serviceInterfaces_.erase(getSpawnablesService_);
+            getSpawnablesService_ = shouldReset
+                ? nullptr
+                : std::make_shared<Service<simulation_interfaces::srv::GetSpawnables>>(selectedServiceName, node_);
+            if (getSpawnablesService_)
+            {
+                serviceInterfaces_.insert(getSpawnablesService_);
+            }
+            break;
+        case ServiceType::SERVICE_SPAWN_ENTITY:
+            serviceInterfaces_.erase(spawnEntityService_);
+            spawnEntityService_ = shouldReset
+                ? nullptr
+                : std::make_shared<Service<simulation_interfaces::srv::SpawnEntity>>(selectedServiceName, node_);
+            if (spawnEntityService_)
+            {
+                serviceInterfaces_.insert(spawnEntityService_);
+            }
+            break;
+        case ServiceType::SERVICE_GET_ENTITIES:
+            serviceInterfaces_.erase(getEntitiesService_);
+            getEntitiesService_ = shouldReset
+                ? nullptr
+                : std::make_shared<Service<simulation_interfaces::srv::GetEntities>>(selectedServiceName, node_);
+            if (getEntitiesService_)
+            {
+                serviceInterfaces_.insert(getEntitiesService_);
+            }
+            break;
+        case ServiceType::SERVICE_GET_ENTITY_STATE:
+            serviceInterfaces_.erase(getEntityStateService_);
+            getEntityStateService_ = shouldReset
+                ? nullptr
+                : std::make_shared<Service<simulation_interfaces::srv::GetEntityState>>(selectedServiceName, node_);
+            if (getEntityStateService_)
+            {
+                serviceInterfaces_.insert(getEntityStateService_);
+            }
+            break;
+        case ServiceType::SERVICE_SET_ENTITY_STATE:
+            serviceInterfaces_.erase(setEntityStateService_);
+            setEntityStateService_ = shouldReset
+                ? nullptr
+                : std::make_shared<Service<simulation_interfaces::srv::SetEntityState>>(selectedServiceName, node_);
+            if (setEntityStateService_)
+            {
+                serviceInterfaces_.insert(setEntityStateService_);
+            }
+            break;
+        case ServiceType::SERVICE_DELETE_ENTITY:
+            serviceInterfaces_.erase(deleteEntityService_);
+            deleteEntityService_ = shouldReset
+                ? nullptr
+                : std::make_shared<Service<simulation_interfaces::srv::DeleteEntity>>(selectedServiceName, node_);
+            if (deleteEntityService_)
+            {
+                serviceInterfaces_.insert(deleteEntityService_);
+            }
+            break;
+        case ServiceType::SERVICE_GET_SIM_FEATURES:
+            serviceInterfaces_.erase(getSimFeaturesService_);
+            getSimFeaturesService_ = shouldReset
+                ? nullptr
+                : std::make_shared<Service<simulation_interfaces::srv::GetSimulatorFeatures>>(selectedServiceName,
+                                                                                              node_);
+            if (getSimFeaturesService_)
+            {
+                serviceInterfaces_.insert(getSimFeaturesService_);
+            }
+            break;
+        case ServiceType::SERVICE_RESET_SIMULATION:
+            serviceInterfaces_.erase(resetSimulationService_);
+            resetSimulationService_ = shouldReset
+                ? nullptr
+                : std::make_shared<Service<simulation_interfaces::srv::ResetSimulation>>(selectedServiceName, node_);
+            if (resetSimulationService_)
+            {
+                serviceInterfaces_.insert(resetSimulationService_);
+            }
+            break;
+        case ServiceType::SERVICE_STEP_SIMULATION:
+            serviceInterfaces_.erase(stepSimulationService_);
+            stepSimulationService_ = shouldReset
+                ? nullptr
+                : std::make_shared<Service<simulation_interfaces::srv::StepSimulation>>(selectedServiceName, node_);
+            if (stepSimulationService_)
+            {
+                serviceInterfaces_.insert(stepSimulationService_);
+            }
+            break;
+        case ServiceType::SERVICE_GET_SIM_STATE:
+            serviceInterfaces_.erase(getSimulationStateService_);
+            getSimulationStateService_ = shouldReset
+                ? nullptr
+                : std::make_shared<Service<simulation_interfaces::srv::GetSimulationState>>(selectedServiceName, node_);
+            if (getSimulationStateService_)
+            {
+                serviceInterfaces_.insert(getSimulationStateService_);
+            }
+            break;
+        case ServiceType::SERVICE_SET_SIM_STATE:
+            serviceInterfaces_.erase(setSimulationStateService_);
+            setSimulationStateService_ = shouldReset
+                ? nullptr
+                : std::make_shared<Service<simulation_interfaces::srv::SetSimulationState>>(selectedServiceName, node_);
+            if (setSimulationStateService_)
+            {
+                serviceInterfaces_.insert(setSimulationStateService_);
+            }
+            break;
+        case ServiceType::ACTION_SIMULATE_STEPS:
+            simulateStepsAction_ = selectedServiceName;
+            break;
+        default:
+            RCLCPP_ERROR(node_->get_logger(), "Unknown service type");
+        }
     }
 
 } // namespace q_simulation_interfaces

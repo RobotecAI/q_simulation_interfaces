@@ -31,6 +31,7 @@ find_package(interactive_markers REQUIRED)
 find_package(tf2 REQUIRED)
 find_package(tf2_ros REQUIRED)
 find_package(tf2_geometry_msgs REQUIRED)
+find_package(rosidl_runtime_cpp REQUIRED)
 
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 set(CMAKE_CXX_STANDARD 17)
@@ -39,9 +40,10 @@ set(CMAKE_CXX_STANDARD 17)
 
 qt5_wrap_cpp(MOC_FILES
         include/q_simulation_interfaces/simulation_panel.h
+        include/q_simulation_interfaces/service_discovery.h
 )
 
-set(SOURCES src/simulation_widget.cpp src/simulation_panel.cpp)
+set(SOURCES src/simulation_widget.cpp src/simulation_panel.cpp src/service_discovery.cpp)
 
 add_library(${PROJECT_NAME} SHARED ${SOURCES} ${MOC_FILES})
 target_include_directories(${PROJECT_NAME} PUBLIC
@@ -53,7 +55,7 @@ ament_target_dependencies(${PROJECT_NAME}
     rclcpp_action
     simulation_interfaces
     pluginlib rviz_common  interactive_markers visualization_msgs
-    tf2 tf2_ros tf2_geometry_msgs
+    tf2 tf2_ros tf2_geometry_msgs rosidl_runtime_cpp
 )
 
 target_link_libraries(${PROJECT_NAME}
