@@ -114,6 +114,9 @@ namespace q_simulation_interfaces
         connect(ui_->setSimStateButton, &QPushButton::clicked, this, &SimulationWidget::SetSimulationState);
         connect(ui_->stepSimServiceButton, &QPushButton::clicked, this, &SimulationWidget::StepSimulationService);
         connect(ui_->ComboEntities, &QComboBox::currentTextChanged, this, [this]() { this->GetEntityState(true); });
+        connect(ui_->getAvailableWorldsButton, &QPushButton::clicked, this, &SimulationWidget::GetAvailableWorlds);
+        connect(ui_->loadWorldButton, &QPushButton::clicked, this, &SimulationWidget::LoadWorld);
+        connect(ui_->unloadWorldButton, &QPushButton::clicked, this, &SimulationWidget::UnloadWorld);
 
         // Connect spawn position spin boxes to update marker
         connect(ui_->doubleSpinBoxX, QOverload<double>::of(&QDoubleSpinBox::valueChanged), this,
@@ -232,6 +235,97 @@ namespace q_simulation_interfaces
             }
         };
         setSimulationStateService_->call_service_async(cb, request);
+    }
+
+
+    void SimulationWidget::LoadWorld()
+    {
+        if (!loadWorldService_)
+        {
+            QMessageBox::warning(this, "Service Not Available",
+                                 "Load World service is not available. Please select a valid service.");
+            return;
+        }
+
+        simulation_interfaces::srv::LoadWorld::Request request;
+        auto selectedWorld = ui_->availableWorldsCombo->currentText();
+        request.uri = selectedWorld.toStdString();
+
+        auto cb = [this](auto response)
+        {
+            ProduceWarningIfProblem(this, "Load World", response);
+            if (response)
+            {
+                ui_->currentWorldLabel->setText("Current world: " + QString::fromStdString(response->world));
+            }
+        };
+    }
+
+    void SimulationWidget::UnloadWorld()
+    {
+        if (!unloadWorldService_)
+        {
+            QMessageBox::warning(this, "Service Not Available",
+                                 "Unload World service is not available. Please select a valid service.");
+            return;
+        }
+
+        simulation_interfaces::srv::UnloadWorld::Request request;
+
+        auto cb = [this](auto response)
+        {
+            ProduceWarningIfProblem(this, "Unload World", response);
+            if (response)
+            {
+                ui_->currentWorldLabel->setText("Current world: ");
+            }
+        };
+        unloadWorldService_->call_service_async(cb, request);
+    }
+
+    void SimulationWidget::GetAvailableWorlds()
+    {
+        if (!getAvailableWorldsService_)
+        {
+            QMessageBox::warning(this, "Service Not Available",
+                                 "Get Available Worlds service is not available. Please select a valid service.");
+            return;
+        }
+
+        simulation_interfaces::srv::GetAvailableWorlds::Request request;
+        auto cb = [this](auto response)
+        {
+            ProduceWarningIfProblem(this, "Get Available Worlds", response);
+            if (response && response->result.result == simulation_interfaces::msg::Result::RESULT_OK)
+            {
+                ui_->availableWorldsCombo->clear();
+
+                auto worlds = response->worlds;
+                for (const auto& world : worlds)
+                {
+                    ui_->availableWorldsCombo->addItem(QString::fromStdString(world.name));
+                }
+            }
+        };
+        getAvailableWorldsService_->call_service_async(cb, request);
+    }
+
+    void SimulationWidget::GetCurrentWorld()
+    {
+        if (!getCurrentWorldService_)
+        {
+            return;
+        }
+        simulation_interfaces::srv::GetCurrentWorld::Request request;
+        auto cb = [this](auto response)
+        {
+            ProduceWarningIfProblem(this, "Get Current World", response);
+            if (response && response->result.result == simulation_interfaces::msg::Result::RESULT_OK)
+            {
+                ui_->currentWorldLabel->setText("Current world: " + QString::fromStdString(response->world.name));
+            }
+        };
+        getCurrentWorldService_->call_service_async(cb, request);
     }
 
     void SimulationWidget::ActionThreadWorker(int steps)

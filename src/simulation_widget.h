@@ -30,15 +30,19 @@
 #include <QComboBox>
 #include <q_simulation_interfaces/service_discovery.h>
 #include <simulation_interfaces/srv/delete_entity.hpp>
+#include <simulation_interfaces/srv/get_available_worlds.hpp>
+#include <simulation_interfaces/srv/get_current_world.hpp>
 #include <simulation_interfaces/srv/get_entities.hpp>
 #include <simulation_interfaces/srv/get_entity_state.hpp>
 #include <simulation_interfaces/srv/get_simulation_state.hpp>
 #include <simulation_interfaces/srv/get_spawnables.hpp>
+#include <simulation_interfaces/srv/load_world.hpp>
 #include <simulation_interfaces/srv/reset_simulation.hpp>
 #include <simulation_interfaces/srv/set_entity_state.hpp>
 #include <simulation_interfaces/srv/set_simulation_state.hpp>
 #include <simulation_interfaces/srv/spawn_entity.hpp>
 #include <simulation_interfaces/srv/step_simulation.hpp>
+#include <simulation_interfaces/srv/unload_world.hpp>
 
 namespace Ui
 {
@@ -65,7 +69,6 @@ namespace q_simulation_interfaces
         void hideEvent(QHideEvent* event) override;
         void showEvent(QShowEvent* event) override;
 
-        void onShowServicesTab();
         void GetSpawnables();
         void SpawnButton();
         void GetAllEntities();
@@ -78,6 +81,10 @@ namespace q_simulation_interfaces
         void GetSimulationState();
         void SetSimulationState();
         void StepSimulationService();
+        void LoadWorld();
+        void UnloadWorld();
+        void GetAvailableWorlds();
+        void GetCurrentWorld();
 
         //! The thread with own ROS 2 node that will run the action client
         void ActionThreadWorker(int steps);
@@ -112,6 +119,10 @@ namespace q_simulation_interfaces
         std::shared_ptr<Service<simulation_interfaces::srv::GetSimulationState>> getSimulationStateService_;
         std::shared_ptr<Service<simulation_interfaces::srv::SetSimulationState>> setSimulationStateService_;
         std::shared_ptr<Service<simulation_interfaces::srv::StepSimulation>> stepSimulationService_;
+        std::shared_ptr<Service<simulation_interfaces::srv::GetAvailableWorlds>> getAvailableWorldsService_;
+        std::shared_ptr<Service<simulation_interfaces::srv::GetCurrentWorld>> getCurrentWorldService_;
+        std::shared_ptr<Service<simulation_interfaces::srv::LoadWorld>> loadWorldService_;
+        std::shared_ptr<Service<simulation_interfaces::srv::UnloadWorld>> unloadWorldService_;
 
         // Action names
         std::string simulateStepsAction_ = "";

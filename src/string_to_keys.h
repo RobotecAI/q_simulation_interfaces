@@ -44,7 +44,14 @@ const std::map<int, std::string> FeatureToName{
     {31, "STEP_SIMULATION_SINGLE"},
     {32, "STEP_SIMULATION_MULTIPLE"},
     {33, "STEP_SIMULATION_ACTION"},
+    {40, "WORLD_LOADING"},
+    {41, "WORLD_RESOURCE_STRING"},
+    {42, "WORLD_TAGS"},
+    {43, "WORLD_UNLOADING"},
+    {44, "WORLD_INFO_GETTING"},
+    {45, "AVAILABLE_WORLDS"},
 };
+
 const std::map<int, std::string> FeatureDescription{
     {0, "Supports spawn interface (SpawnEntity)."},
     {1, "Supports deleting entities (DeleteEntity)."},
@@ -71,7 +78,14 @@ const std::map<int, std::string> FeatureDescription{
     {31, "Supports single stepping through simulation with StepSimulation interface."},
     {32, "Supports multi-stepping through simulation, either through StepSimulation service or StepSimulation action."},
     {33, "Supports SimulateSteps action interface."},
+    {40, "Supports loading worlds through LoadWorld interface."},
+    {41, "Supports resource_string field in LoadWorld interface."},
+    {42, "Supports tags field in LoadWorld interface."},
+    {43, "Supports unloading worlds through UnloadWorld interface."},
+    {44, "Supports GetWorldInfo interface."},
+    {45, "Supports GetAvailableWorlds interface."},
 };
+
 const std::unordered_map<std::string, int> ScopeNameToId{
     {"SCOPE_DEFAULT", 0}, {"SCOPE_TIME", 1}, {"SCOPE_STATE", 2}, {"SCOPE_SPAWNED", 4}, {"SCOPE_ALL", 255},
 };

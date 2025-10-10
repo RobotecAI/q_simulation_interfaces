@@ -43,6 +43,10 @@ namespace q_simulation_interfaces
         SERVICE_STEP_SIMULATION,
         SERVICE_GET_SIM_STATE,
         SERVICE_SET_SIM_STATE,
+        SERVICE_GET_CURRENT_WORLD,
+        SERVICE_GET_AVAILABLE_WORLDS,
+        SERVICE_LOAD_WORLD,
+        SERVICE_UNLOAD_WORLD,
         ACTION_SIMULATE_STEPS,
         SUPPORTED_SERVICE_IDL_COUNT
     };
@@ -75,6 +79,12 @@ namespace q_simulation_interfaces
               false},
              {ServiceType::SERVICE_SET_SIM_STATE, "simulation_interfaces/srv/SetSimulationState", "Set Sim State",
               false},
+             {ServiceType::SERVICE_GET_CURRENT_WORLD, "simulation_interfaces/srv/GetCurrentWorld", "Get Current World",
+              false},
+             {ServiceType::SERVICE_GET_AVAILABLE_WORLDS, "simulation_interfaces/srv/GetAvailableWorlds",
+              "Get Available Worlds", false},
+             {ServiceType::SERVICE_LOAD_WORLD, "simulation_interfaces/srv/LoadWorld", "Load World", false},
+             {ServiceType::SERVICE_UNLOAD_WORLD, "simulation_interfaces/srv/UnloadWorld", "Unload World", false},
              {ServiceType::ACTION_SIMULATE_STEPS, "simulation_interfaces/action/SimulateSteps", "Simulate Steps",
               true}}};
 
