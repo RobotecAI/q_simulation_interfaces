@@ -14,7 +14,7 @@
    <item row="0" column="1">
     <widget class="QTabWidget" name="tabWidget">
      <property name="currentIndex">
-      <number>0</number>
+      <number>3</number>
      </property>
      <widget class="QWidget" name="simulation">
       <attribute name="title">
@@ -523,62 +523,52 @@
       <attribute name="title">
        <string>Worlds</string>
       </attribute>
-      <widget class="QWidget" name="verticalLayoutWidget">
-       <property name="geometry">
-        <rect>
-         <x>-1</x>
-         <y>-1</y>
-         <width>681</width>
-         <height>401</height>
-        </rect>
-       </property>
-       <layout class="QVBoxLayout" name="verticalLayout_4">
-        <item>
-         <widget class="QPushButton" name="getAvailableWorldsButton">
-          <property name="text">
-           <string>Get Available Worlds</string>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="QComboBox" name="availableWorldsCombo"/>
-        </item>
-        <item>
-         <widget class="QPushButton" name="loadWorldButton">
-          <property name="text">
-           <string>Load World</string>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="QPushButton" name="unloadWorldButton">
-          <property name="text">
-           <string>Unload World</string>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="QLabel" name="currentWorldLabel">
-          <property name="text">
-           <string>Current world:</string>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <spacer name="verticalSpacer">
-          <property name="orientation">
-           <enum>Qt::Vertical</enum>
-          </property>
-          <property name="sizeHint" stdset="0">
-           <size>
-            <width>20</width>
-            <height>40</height>
-           </size>
-          </property>
-         </spacer>
-        </item>
-       </layout>
-      </widget>
+      <layout class="QVBoxLayout" name="verticalLayout_4">
+       <item>
+        <widget class="QPushButton" name="getAvailableWorldsButton">
+         <property name="text">
+          <string>Get Available Worlds</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QComboBox" name="availableWorldsCombo"/>
+       </item>
+       <item>
+        <widget class="QPushButton" name="loadWorldButton">
+         <property name="text">
+          <string>Load World</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QPushButton" name="unloadWorldButton">
+         <property name="text">
+          <string>Unload World</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QLabel" name="currentWorldLabel">
+         <property name="text">
+          <string>Current world:</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <spacer name="verticalSpacer">
+         <property name="orientation">
+          <enum>Qt::Vertical</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>20</width>
+           <height>225</height>
+          </size>
+         </property>
+        </spacer>
+       </item>
+      </layout>
      </widget>
      <widget class="QWidget" name="servicesNames">
       <property name="enabled">

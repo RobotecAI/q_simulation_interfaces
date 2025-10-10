@@ -251,14 +251,18 @@ namespace q_simulation_interfaces
         auto selectedWorld = ui_->availableWorldsCombo->currentText();
         request.uri = selectedWorld.toStdString();
 
+        std::cout << "Loading world: " << request.uri << std::endl;
+
         auto cb = [this](auto response)
         {
             ProduceWarningIfProblem(this, "Load World", response);
             if (response)
             {
-                ui_->currentWorldLabel->setText("Current world: " + QString::fromStdString(response->world));
+                ui_->currentWorldLabel->setText("Current world: " +
+                                                QString::fromStdString(response->world.world_resource.uri));
             }
         };
+        loadWorldService_->call_service_async(cb, request);
     }
 
     void SimulationWidget::UnloadWorld()
@@ -293,6 +297,8 @@ namespace q_simulation_interfaces
         }
 
         simulation_interfaces::srv::GetAvailableWorlds::Request request;
+        request.offline_only = true;
+
         auto cb = [this](auto response)
         {
             ProduceWarningIfProblem(this, "Get Available Worlds", response);
@@ -303,7 +309,7 @@ namespace q_simulation_interfaces
                 auto worlds = response->worlds;
                 for (const auto& world : worlds)
                 {
-                    ui_->availableWorldsCombo->addItem(QString::fromStdString(world.name));
+                    ui_->availableWorldsCombo->addItem(QString::fromStdString(world.world_resource.uri));
                 }
             }
         };
@@ -322,7 +328,8 @@ namespace q_simulation_interfaces
             ProduceWarningIfProblem(this, "Get Current World", response);
             if (response && response->result.result == simulation_interfaces::msg::Result::RESULT_OK)
             {
-                ui_->currentWorldLabel->setText("Current world: " + QString::fromStdString(response->world.name));
+                ui_->currentWorldLabel->setText("Current world: " +
+                                                QString::fromStdString(response->world.world_resource.uri));
             }
         };
         getCurrentWorldService_->call_service_async(cb, request);
@@ -969,6 +976,47 @@ namespace q_simulation_interfaces
             if (setSimulationStateService_)
             {
                 serviceInterfaces_.insert(setSimulationStateService_);
+            }
+            break;
+        case ServiceType::SERVICE_GET_CURRENT_WORLD:
+            serviceInterfaces_.erase(getCurrentWorldService_);
+            getCurrentWorldService_ = shouldReset
+                ? nullptr
+                : std::make_shared<Service<simulation_interfaces::srv::GetCurrentWorld>>(selectedServiceName, node_);
+            if (getCurrentWorldService_)
+            {
+                serviceInterfaces_.insert(getCurrentWorldService_);
+            }
+            GetCurrentWorld();
+            break;
+        case ServiceType::SERVICE_GET_AVAILABLE_WORLDS:
+            serviceInterfaces_.erase(getAvailableWorldsService_);
+            getAvailableWorldsService_ = shouldReset
+                ? nullptr
+                : std::make_shared<Service<simulation_interfaces::srv::GetAvailableWorlds>>(selectedServiceName, node_);
+            if (getAvailableWorldsService_)
+            {
+                serviceInterfaces_.insert(getAvailableWorldsService_);
+            }
+            break;
+        case ServiceType::SERVICE_LOAD_WORLD:
+            serviceInterfaces_.erase(loadWorldService_);
+            loadWorldService_ = shouldReset
+                ? nullptr
+                : std::make_shared<Service<simulation_interfaces::srv::LoadWorld>>(selectedServiceName, node_);
+            if (loadWorldService_)
+            {
+                serviceInterfaces_.insert(loadWorldService_);
+            }
+            break;
+        case ServiceType::SERVICE_UNLOAD_WORLD:
+            serviceInterfaces_.erase(unloadWorldService_);
+            unloadWorldService_ = shouldReset
+                ? nullptr
+                : std::make_shared<Service<simulation_interfaces::srv::UnloadWorld>>(selectedServiceName, node_);
+            if (unloadWorldService_)
+            {
+                serviceInterfaces_.insert(unloadWorldService_);
             }
             break;
         case ServiceType::ACTION_SIMULATE_STEPS:
