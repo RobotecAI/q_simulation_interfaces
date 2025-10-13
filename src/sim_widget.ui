@@ -532,6 +532,16 @@
         </widget>
        </item>
        <item>
+        <widget class="QCheckBox" name="worldsUseOfflineCheck">
+         <property name="text">
+          <string>Worlds: Offline only</string>
+         </property>
+         <property name="checked">
+          <bool>true</bool>
+         </property>
+        </widget>
+       </item>
+       <item>
         <widget class="QComboBox" name="availableWorldsCombo"/>
        </item>
        <item>

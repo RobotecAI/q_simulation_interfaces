@@ -249,9 +249,14 @@ namespace q_simulation_interfaces
 
         simulation_interfaces::srv::LoadWorld::Request request;
         auto selectedWorld = ui_->availableWorldsCombo->currentText();
-        request.uri = selectedWorld.toStdString();
-
-        std::cout << "Loading world: " << request.uri << std::endl;
+        if (useUriForWorlds_)
+        {
+            request.uri = selectedWorld.toStdString();
+        }
+        else
+        {
+            request.resource_string = selectedWorld.toStdString();
+        }
 
         auto cb = [this](auto response)
         {
@@ -297,7 +302,7 @@ namespace q_simulation_interfaces
         }
 
         simulation_interfaces::srv::GetAvailableWorlds::Request request;
-        request.offline_only = true;
+        request.offline_only = ui_->worldsUseOfflineCheck->isChecked();
 
         auto cb = [this](auto response)
         {
@@ -307,9 +312,20 @@ namespace q_simulation_interfaces
                 ui_->availableWorldsCombo->clear();
 
                 auto worlds = response->worlds;
+
+                if (!worlds.empty())
+                {
+                    // Determine if we are using URI or resource string based on the first world
+                    useUriForWorlds_ = !worlds[0].world_resource.uri.empty();
+                }
+
                 for (const auto& world : worlds)
                 {
-                    ui_->availableWorldsCombo->addItem(QString::fromStdString(world.world_resource.uri));
+
+                    const QString worldStr = useUriForWorlds_
+                        ? QString::fromStdString(world.world_resource.uri)
+                        : QString::fromStdString(world.world_resource.resource_string);
+                    ui_->availableWorldsCombo->addItem(worldStr);
                 }
             }
         };
@@ -328,8 +344,11 @@ namespace q_simulation_interfaces
             ProduceWarningIfProblem(this, "Get Current World", response);
             if (response && response->result.result == simulation_interfaces::msg::Result::RESULT_OK)
             {
-                ui_->currentWorldLabel->setText("Current world: " +
-                                                QString::fromStdString(response->world.world_resource.uri));
+                useUriForWorlds_ = !response->world.world_resource.uri.empty();
+                const QString worldStr = useUriForWorlds_
+                    ? QString::fromStdString(response->world.world_resource.uri)
+                    : QString::fromStdString(response->world.world_resource.resource_string);
+                ui_->currentWorldLabel->setText("Current world: " + worldStr);
             }
         };
         getCurrentWorldService_->call_service_async(cb, request);

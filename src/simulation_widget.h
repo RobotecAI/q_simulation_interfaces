@@ -127,6 +127,9 @@ namespace q_simulation_interfaces
         // Action names
         std::string simulateStepsAction_ = "";
 
+        // Whether to use URI or resource string for worlds
+        bool useUriForWorlds_ = true;
+
         // Vector to hold all service interfaces of created services
         std::set<std::shared_ptr<ServiceInterface>> serviceInterfaces_;
         QTimer* timer_; //! Timer for periodic updates
