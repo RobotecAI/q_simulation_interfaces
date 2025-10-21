@@ -22,7 +22,9 @@ inline tf2::Quaternion AxisAngleToQuaternion(const tf2::Vector3& axis, const dou
 {
     tf2::Quaternion q;
 
-    if (axis.length() > 1e-6)
+    // Threshold for considering axis as non-zero
+    constexpr double kAxisEpsilon = 1e-6;
+    if (axis.length() > kAxisEpsilon)
     {
         q = tf2::Quaternion(axis, angle);
         q.normalize();
