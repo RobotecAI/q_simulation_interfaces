@@ -406,6 +406,30 @@
         </layout>
        </item>
        <item>
+        <layout class="QHBoxLayout" name="horizontalLayout_6">
+         <item>
+          <widget class="QLabel" name="spawnRotVectorLabel">
+           <property name="text">
+            <string>RotVector </string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QLineEdit" name="spawnRotVectorEdit"/>
+         </item>
+         <item>
+          <widget class="QLabel" name="spawnRotAngleLabel">
+           <property name="text">
+            <string>RotAngle [deg] </string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QDoubleSpinBox" name="spawnRotAngleBox"/>
+         </item>
+        </layout>
+       </item>
+       <item>
         <layout class="QHBoxLayout" name="horizontalLayout">
          <item>
           <widget class="QLabel" name="Name">

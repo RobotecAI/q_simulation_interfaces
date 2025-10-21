@@ -736,6 +736,16 @@ namespace q_simulation_interfaces
         request.initial_pose.pose.position.y = ui_->doubleSpinBoxY->value();
         request.initial_pose.pose.position.z = ui_->doubleSpinBoxZ->value();
 
+        const QString vectorStr = ui_->spawnRotVectorEdit->text();
+        const double angle = qDegreesToRadians(ui_->spawnRotAngleBox->value());
+        const auto vector = QStringToVector(vectorStr);
+        tf2::Quaternion q(vector, angle);
+
+        request.initial_pose.pose.orientation.x = q.x();
+        request.initial_pose.pose.orientation.y = q.y();
+        request.initial_pose.pose.orientation.z = q.z();
+        request.initial_pose.pose.orientation.w = q.w();
+
         auto cb = [this](auto response)
         {
             ProduceWarningIfProblem(this, "SpawnEntity", response);
