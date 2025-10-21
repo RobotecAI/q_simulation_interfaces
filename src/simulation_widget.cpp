@@ -114,6 +114,9 @@ namespace q_simulation_interfaces
         connect(ui_->setSimStateButton, &QPushButton::clicked, this, &SimulationWidget::SetSimulationState);
         connect(ui_->stepSimServiceButton, &QPushButton::clicked, this, &SimulationWidget::StepSimulationService);
         connect(ui_->ComboEntities, &QComboBox::currentTextChanged, this, [this]() { this->GetEntityState(true); });
+        connect(ui_->getAvailableWorldsButton, &QPushButton::clicked, this, &SimulationWidget::GetAvailableWorlds);
+        connect(ui_->loadWorldButton, &QPushButton::clicked, this, &SimulationWidget::LoadWorld);
+        connect(ui_->unloadWorldButton, &QPushButton::clicked, this, &SimulationWidget::UnloadWorld);
 
         // Connect spawn position spin boxes to update marker
         connect(ui_->doubleSpinBoxX, QOverload<double>::of(&QDoubleSpinBox::valueChanged), this,
@@ -232,6 +235,126 @@ namespace q_simulation_interfaces
             }
         };
         setSimulationStateService_->call_service_async(cb, request);
+    }
+
+
+    void SimulationWidget::LoadWorld()
+    {
+        if (!loadWorldService_)
+        {
+            QMessageBox::warning(this, "Service Not Available",
+                                 "Load World service is not available. Please select a valid service.");
+            return;
+        }
+
+        simulation_interfaces::srv::LoadWorld::Request request;
+        auto selectedWorld = ui_->availableWorldsCombo->currentText();
+        if (useUriForWorlds_)
+        {
+            request.uri = selectedWorld.toStdString();
+        }
+        else
+        {
+            request.resource_string = selectedWorld.toStdString();
+        }
+
+        auto cb = [this](auto response)
+        {
+            ProduceWarningIfProblem(this, "Load World", response);
+            GetCurrentWorld();
+        };
+        loadWorldService_->call_service_async(cb, request);
+    }
+
+    void SimulationWidget::UnloadWorld()
+    {
+        if (!unloadWorldService_)
+        {
+            QMessageBox::warning(this, "Service Not Available",
+                                 "Unload World service is not available. Please select a valid service.");
+            return;
+        }
+
+        simulation_interfaces::srv::UnloadWorld::Request request;
+
+        auto cb = [this](auto response)
+        {
+            ProduceWarningIfProblem(this, "Unload World", response);
+            GetCurrentWorld();
+        };
+        unloadWorldService_->call_service_async(cb, request);
+    }
+
+    void SimulationWidget::GetAvailableWorlds()
+    {
+        if (!getAvailableWorldsService_)
+        {
+            QMessageBox::warning(this, "Service Not Available",
+                                 "Get Available Worlds service is not available. Please select a valid service.");
+            return;
+        }
+
+        simulation_interfaces::srv::GetAvailableWorlds::Request request;
+        request.offline_only = ui_->worldsUseOfflineCheck->isChecked();
+
+        auto cb = [this](auto response)
+        {
+            ProduceWarningIfProblem(this, "Get Available Worlds", response);
+            if (response && response->result.result == simulation_interfaces::msg::Result::RESULT_OK)
+            {
+                ui_->availableWorldsCombo->clear();
+
+                auto worlds = response->worlds;
+
+                if (!worlds.empty())
+                {
+                    // Determine if we are using URI or resource string based on the first world
+                    useUriForWorlds_ = !worlds[0].world_resource.uri.empty();
+                }
+
+                for (const auto& world : worlds)
+                {
+
+                    const QString worldStr = useUriForWorlds_
+                        ? QString::fromStdString(world.world_resource.uri)
+                        : QString::fromStdString(world.world_resource.resource_string);
+                    ui_->availableWorldsCombo->addItem(worldStr);
+                }
+            }
+        };
+        getAvailableWorldsService_->call_service_async(cb, request);
+    }
+
+    void SimulationWidget::GetCurrentWorld()
+    {
+        if (!getCurrentWorldService_)
+        {
+            // Getting current world is called periodically, so just update the label without showing a message box
+            ui_->currentWorldLabel->setText("Current world: unknown due to unavailable service");
+            return;
+        }
+        simulation_interfaces::srv::GetCurrentWorld::Request request;
+        auto cb = [this](auto response)
+        {
+            // Check for NO_WORLD_LOADED error, which is not an error in this context
+            if (response &&
+                response->result.result == simulation_interfaces::srv::GetCurrentWorld::Response::NO_WORLD_LOADED)
+            {
+                ui_->currentWorldLabel->setText("Current world: No world loaded");
+                return;
+            }
+
+            ProduceWarningIfProblem(this, "Get Current World", response);
+            if (response && response->result.result == simulation_interfaces::msg::Result::RESULT_OK)
+            {
+                useUriForWorlds_ = !response->world.world_resource.uri.empty();
+                const QString worldStr = useUriForWorlds_
+                    ? QString::fromStdString(response->world.world_resource.uri)
+                    : QString::fromStdString(response->world.world_resource.resource_string);
+                ui_->currentWorldLabel->setText("Current world: " + worldStr);
+            }
+        };
+        getCurrentWorldService_->call_service_async(cb, request);
     }
 
     void SimulationWidget::ActionThreadWorker(int steps)
@@ -875,6 +998,47 @@ namespace q_simulation_interfaces
             if (setSimulationStateService_)
             {
                 serviceInterfaces_.insert(setSimulationStateService_);
+            }
+            break;
+        case ServiceType::SERVICE_GET_CURRENT_WORLD:
+            serviceInterfaces_.erase(getCurrentWorldService_);
+            getCurrentWorldService_ = shouldReset
+                ? nullptr
+                : std::make_shared<Service<simulation_interfaces::srv::GetCurrentWorld>>(selectedServiceName, node_);
+            if (getCurrentWorldService_)
+            {
+                serviceInterfaces_.insert(getCurrentWorldService_);
+            }
+            GetCurrentWorld();
+            break;
+        case ServiceType::SERVICE_GET_AVAILABLE_WORLDS:
+            serviceInterfaces_.erase(getAvailableWorldsService_);
+            getAvailableWorldsService_ = shouldReset
+                ? nullptr
+                : std::make_shared<Service<simulation_interfaces::srv::GetAvailableWorlds>>(selectedServiceName, node_);
+            if (getAvailableWorldsService_)
+            {
+                serviceInterfaces_.insert(getAvailableWorldsService_);
+            }
+            break;
+        case ServiceType::SERVICE_LOAD_WORLD:
+            serviceInterfaces_.erase(loadWorldService_);
+            loadWorldService_ = shouldReset
+                ? nullptr
+                : std::make_shared<Service<simulation_interfaces::srv::LoadWorld>>(selectedServiceName, node_);
+            if (loadWorldService_)
+            {
+                serviceInterfaces_.insert(loadWorldService_);
+            }
+            break;
+        case ServiceType::SERVICE_UNLOAD_WORLD:
+            serviceInterfaces_.erase(unloadWorldService_);
+            unloadWorldService_ = shouldReset
+                ? nullptr
+                : std::make_shared<Service<simulation_interfaces::srv::UnloadWorld>>(selectedServiceName, node_);
+            if (unloadWorldService_)
+            {
+                serviceInterfaces_.insert(unloadWorldService_);
             }
             break;
         case ServiceType::ACTION_SIMULATE_STEPS:
