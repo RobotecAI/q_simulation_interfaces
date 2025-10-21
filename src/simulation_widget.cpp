@@ -261,11 +261,7 @@ namespace q_simulation_interfaces
         auto cb = [this](auto response)
         {
             ProduceWarningIfProblem(this, "Load World", response);
-            if (response)
-            {
-                ui_->currentWorldLabel->setText("Current world: " +
-                                                QString::fromStdString(response->world.world_resource.uri));
-            }
+            GetCurrentWorld();
         };
         loadWorldService_->call_service_async(cb, request);
     }
@@ -284,10 +280,7 @@ namespace q_simulation_interfaces
         auto cb = [this](auto response)
         {
             ProduceWarningIfProblem(this, "Unload World", response);
-            if (response)
-            {
-                ui_->currentWorldLabel->setText("Current world: ");
-            }
+            GetCurrentWorld();
         };
         unloadWorldService_->call_service_async(cb, request);
     }
@@ -336,11 +329,21 @@ namespace q_simulation_interfaces
     {
         if (!getCurrentWorldService_)
         {
+            // Getting current world is called periodically, so just update the label without showing a message box
+            ui_->currentWorldLabel->setText("Current world: unknown due to unavailable service");
             return;
         }
         simulation_interfaces::srv::GetCurrentWorld::Request request;
         auto cb = [this](auto response)
         {
+            // Check for NO_WORLD_LOADED error, which is not an error in this context
+            if (response &&
+                response->result.result == simulation_interfaces::srv::GetCurrentWorld::Response::NO_WORLD_LOADED)
+            {
+                ui_->currentWorldLabel->setText("Current world: No world loaded");
+                return;
+            }
+
             ProduceWarningIfProblem(this, "Get Current World", response);
             if (response && response->result.result == simulation_interfaces::msg::Result::RESULT_OK)
             {
