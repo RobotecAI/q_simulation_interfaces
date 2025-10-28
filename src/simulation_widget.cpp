@@ -21,6 +21,7 @@
 #include <rviz_common/display_context.hpp>
 #include <simulation_interfaces/action/simulate_steps.hpp>
 #include <tf2/LinearMath/Quaternion.h>
+#include "quaternion_utils.h"
 #include "service.h"
 #include "string_to_keys.h"
 #include "ui_sim_widget.h"
@@ -697,8 +698,9 @@ namespace q_simulation_interfaces
 
         const QString vectorStr = ui_->RotVector->text();
         const double angle = qDegreesToRadians(ui_->RotAngle->value());
-        const auto vector = QStringToVector(vectorStr);
-        tf2::Quaternion q(vector, angle);
+        const auto axis = QStringToVector(vectorStr);
+        const auto q = AxisAngleToQuaternion(axis, angle);
+
         request.state.header.frame_id = ui_->frameStateLineEdit->text().toStdString();
         request.state.pose.orientation.x = q.x();
         request.state.pose.orientation.y = q.y();
@@ -715,7 +717,6 @@ namespace q_simulation_interfaces
         auto cb = [this](auto response) { ProduceWarningIfProblem(this, "SetEntityState", response); };
         setEntityStateService_->call_service_async(cb, request);
     }
-
 
     void SimulationWidget::SpawnButton()
     {
@@ -735,6 +736,16 @@ namespace q_simulation_interfaces
         request.initial_pose.pose.position.x = ui_->doubleSpinBoxX->value();
         request.initial_pose.pose.position.y = ui_->doubleSpinBoxY->value();
         request.initial_pose.pose.position.z = ui_->doubleSpinBoxZ->value();
+
+        const QString vectorStr = ui_->spawnRotVectorEdit->text();
+        const double angle = qDegreesToRadians(ui_->spawnRotAngleBox->value());
+        const auto axis = QStringToVector(vectorStr);
+        const auto q = AxisAngleToQuaternion(axis, angle);
+
+        request.initial_pose.pose.orientation.x = q.x();
+        request.initial_pose.pose.orientation.y = q.y();
+        request.initial_pose.pose.orientation.z = q.z();
+        request.initial_pose.pose.orientation.w = q.w();
 
         auto cb = [this](auto response)
         {
