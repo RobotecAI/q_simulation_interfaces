@@ -21,7 +21,9 @@ SET(CMAKE_AUTOUIC ON)
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(Qt5 REQUIRED COMPONENTS Widgets)
-find_package(simulation_interfaces 1 REQUIRED)
+# Both the 1.x and 2.x message definitions are supported (see src/resource_compat.h).
+# The minimum version is 1.1.0, which introduced the world services.
+find_package(simulation_interfaces REQUIRED)
 find_package(rclcpp_action REQUIRED)
 find_package(tf2 REQUIRED)
 find_package(pluginlib REQUIRED)
