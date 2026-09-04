@@ -5,6 +5,8 @@ It utilizes https://github.com/ros-simulation/simulation_interfaces to change th
 
 # Prerequisites
 
+`simulation_interfaces` 1.1.0 or newer is required; both the 1.x and the 2.x message definitions are supported.
+
 ```shell
 sudo apt install ros-$ROS_DISTRO-simulation-interfaces libqt5-dev
 ```

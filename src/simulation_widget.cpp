@@ -22,6 +22,7 @@
 #include <simulation_interfaces/action/simulate_steps.hpp>
 #include <tf2/LinearMath/Quaternion.h>
 #include "quaternion_utils.h"
+#include "resource_compat.h"
 #include "service.h"
 #include "string_to_keys.h"
 #include "ui_sim_widget.h"
@@ -252,11 +253,11 @@ namespace q_simulation_interfaces
         auto selectedWorld = ui_->availableWorldsCombo->currentText();
         if (useUriForWorlds_)
         {
-            request.uri = selectedWorld.toStdString();
+            ResourceUri(request) = selectedWorld.toStdString();
         }
         else
         {
-            request.resource_string = selectedWorld.toStdString();
+            ResourceString(request) = selectedWorld.toStdString();
         }
 
         auto cb = [this](auto response)
@@ -729,7 +730,7 @@ namespace q_simulation_interfaces
 
         simulation_interfaces::srv::SpawnEntity::Request request;
         request.name = ui_->lineEditName->text().toStdString();
-        request.uri = ui_->ComboSpawables->currentText().toStdString();
+        ResourceUri(request) = ui_->ComboSpawables->currentText().toStdString();
         request.entity_namespace = ui_->lineEditNamespace->text().toStdString();
         request.allow_renaming = ui_->checkBoxAllowRename->isChecked();
         request.initial_pose.header.frame_id = ui_->spawnFrameLineEdit->text().toStdString();
@@ -780,11 +781,11 @@ namespace q_simulation_interfaces
 
                 auto spawnables = response->spawnables;
                 std::sort(spawnables.begin(), spawnables.end(),
-                          [](const auto& a, const auto& b) { return a.uri < b.uri; });
+                          [](const auto& a, const auto& b) { return ResourceUri(a) < ResourceUri(b); });
 
                 for (const auto& spawnable : spawnables)
                 {
-                    ui_->ComboSpawables->addItem(QString::fromStdString(spawnable.uri));
+                    ui_->ComboSpawables->addItem(QString::fromStdString(ResourceUri(spawnable)));
                 }
 
                 if (ui_->ComboSpawables->findText(selectedSpawnable) != -1)
